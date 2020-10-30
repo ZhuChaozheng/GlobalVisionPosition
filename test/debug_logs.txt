@@ -1,0 +1,7 @@
+2020.08.22
+We are going to test new function on demo.cpp.
+New files have been added to directory 'include'
+	-> comm_test.h
+	-> ctrl_test.h
+The original file has been backuped.
+	demo.cpp -> demo0822.cpp
