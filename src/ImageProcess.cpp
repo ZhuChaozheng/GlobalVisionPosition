@@ -30,6 +30,7 @@ Point2f getAveragePoint(vector<Point2f>& pointSet)
 	return averagePoint;
 }
 
+
 void rotatedRectROI(const Mat& src, Mat& cropped, 
 		RotatedRect rect)
 {
@@ -225,6 +226,7 @@ void classificationCar(vector<Point2f>* pointSet,
 		}
 	}
 	// cout << "classificationCar: " << point_set.size() << endl;
+
 	int marker = point_set.size() - 3;
 	
 	if (marker >= 0)
@@ -311,6 +313,7 @@ void getCarKeyAttribution(Car& car)
 {
 	vector<Point2f> pointSet = car.pointSet;
 	// car.marker_ = car.pointSet.size() - 3;
+
 	
 	if (pointSet.size() != 0)
 	{
@@ -379,7 +382,9 @@ void determineTriangleVertex(vector<Point2f>& pointSet, Car& car)
 	// equals to one isosceles
 	EdgeNode edgeNode = findMaxDistance(pointSet, 0);
 	double maxDistance = edgeNode.Weight;
+
 	// cout << maxDistance << endl;
+
 	// search second max distance between points,
 	// equals to another isosceles
 	EdgeNode edgeNodeAnother = findMaxDistance(pointSet, 
@@ -537,10 +542,12 @@ void refine_point_set(const vector<Point2f>& pointSet,
 			// cout << currentPoint << endl;
 			circle(cimage, currentPoint, cvRound(radius), 
 				Scalar(255, 255, 255), 1, LINE_AA);
+
 		}
 		iter ++;
 	}
 	cout << "refine: " << newPointSet.size() << endl;
+
 
    //  cout << "finish imwrite w.jpg" << endl;
   	// imshow("w", cimage);

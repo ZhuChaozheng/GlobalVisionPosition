@@ -117,8 +117,6 @@ int main()
           cout << "could not read the image." << endl;
           return 0;
         }
-        imwrite("src_gray_latest.jpg", src);
-        return 0;
         // src_gray is global variable
         // cvtColor(src, src_gray, COLOR_BGR2GRAY);
         medianBlur( src, src_blur, 3 );
@@ -230,5 +228,4 @@ int main()
   }
     capture.release();
     return 0;
-
 }
