@@ -58,34 +58,34 @@ void ConfigParamtersRead(int marker_, float p_,
     FileStorage fs("../config/configure.yaml", 
             FileStorage::READ);
     string front_str;
-    // for (int i = 0; i <= 7; i ++) {
-    //     string front_str = "marker_";
-    //     string combined_str = front_str + to_string(i);
-    //     fs[combined_str] >> marker_;
+    for (int i = 0; i <= 6; i ++) {
+        string front_str = "marker_";
+        string combined_str = front_str + to_string(i);
+        fs[combined_str] >> marker_;
         
-    //     front_str = "p_";
-    //     combined_str = front_str + to_string(i);
-    //     fs[combined_str] >> p_;
+        front_str = "p_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> p_;
 
-    //     front_str = "i_";
-    //     combined_str = front_str + to_string(i);
-    //     fs[combined_str] >> i_;
+        front_str = "i_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> i_;
 
-    //     front_str = "d_";
-    //     combined_str = front_str + to_string(i);
-    //     fs[combined_str] >> d_;
+        front_str = "d_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> d_;
 
-    //     front_str = "ip_";
-    //     combined_str = front_str + to_string(i);
-    //     fs[combined_str] >> ip_;
+        front_str = "ip_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> ip_;
 
-    //     front_str = "port_";
-    //     combined_str = front_str + to_string(i);
-    //     fs[combined_str] >> port_;
+        front_str = "port_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> port_;
         
-    //     Car *car = new Car(marker_, p_, i_, d_, ip_, port_);
-    //     car_set.push_back(*car);
-    // }
+        Car *car = new Car(marker_, p_, i_, d_, ip_, port_);
+        car_set.push_back(*car);
+    }
     cout << "parameter size: " << car_set.size() << endl;
     fs.release();
     std::cout << "File Read Finished!" << std::endl;
@@ -200,24 +200,8 @@ int main()
     Kalman myFilter(0.125, 32, 1023, 0);
     Kalman myFilterSpeed(0.125, 32, 1023, 0);
     
-    // initial adaptive threshold parameter
-    int blockSize = 5; // 5 
-    int constValue = 10; // 10 
-    const int maxVal = 255;
-    /* adaptive threshold algorithms
-    0：ADAPTIVE_THRESH_MEAN_C
-    1: ADAPTIVE_THRESH_GAUSSIAN_C
-    */
-    int adaptiveMethod = 0;
-    /*
-    threshold type
-    0: THRESH_BINARY
-    1: THRESH_BINARY_INV */
-    int thresholdType = 1;
-    // kernel
-    Mat kernel = getStructuringElement(
-            MORPH_RECT, Size(2, 2));
-    Mat src_blur, src_thresh, src_morph;
+    
+    Mat src_thresh;
   	while (1) 
   	{
         // src -> global variable
@@ -225,20 +209,21 @@ int main()
         // src = imread( "../img/src_gray.jpg", 1 );
         if (src.empty())
         {
-          cout << "could not read the image." << endl;
-          return 0;
+            cout << "could not read the image." << endl;
+            return 0;
         }
         // src_gray is global variable
-        GaussianBlur(src, src_blur, Size(7, 7),
-                0, 0); 
-        adaptiveThreshold(src_blur, src_thresh, 
-                maxVal, adaptiveMethod, 
-                thresholdType, blockSize, 
-                constValue); 
-        morphologyEx(src_thresh, src_morph, MORPH_DILATE, 
-                kernel);
+        // GaussianBlur(src, src_blur, Size(7, 7),
+        //         0, 0); 
+        // adaptiveThreshold(src_blur, src_thresh, 
+        //         maxVal, adaptiveMethod, 
+        //         thresholdType, blockSize, 
+        //         constValue); 
+        // morphologyEx(src_thresh, src_morph, MORPH_DILATE, 
+        //         kernel);
+        threshold(src, src_thresh, 60, 255, THRESH_BINARY);
         vector<Point2f> pointSet;
-        thresh_callback(src_morph, pointSet);
+        thresh_callback(src_thresh, pointSet);
         
         int num = 0;
         // loop all the point to classify them 
@@ -261,7 +246,7 @@ int main()
   	    for (auto iter = car_set.begin(); iter != car_set.end();)
   	    {
 	    	getCarKeyAttribution(*iter);
-	    	Point medianPoint = (*iter).medianPoint;
+	    	Point2f medianPoint = (*iter).medianPoint;
 	    	int marker = (*iter).marker_;
 	    	double slope = (*iter).slope;
             Point3f targetPoint = (*iter).target;
@@ -304,8 +289,8 @@ int main()
                     lastWorldPoint.x, 2) + pow(worldPoint.y - 
                     lastWorldPoint.y, 2)) / consumeTime * 1000;
                 cout << "speed: " << speed  << "mm" << endl;
-                filtered_speed = myFilterSpeed.getFilteredValue(speed);
-                cout << "filteredSlope: " << filteredSlope << endl;
+                // filtered_speed = myFilterSpeed.getFilteredValue(speed);
+                // cout << "filteredSlope: " << filteredSlope << endl;
                 //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;
                 deleteCar(*iter, carStateSet);
 

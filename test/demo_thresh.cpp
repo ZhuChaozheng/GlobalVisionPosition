@@ -38,7 +38,7 @@ void ConfigParamtersRead(int marker_, float p_,
     cv::FileStorage fs("../config/configure.yaml", 
             cv::FileStorage::READ);
     string front_str;
-    for (int i = 0; i <= 7; i ++) {
+    for (int i = 0; i <= 6; i ++) {
         string front_str = "marker_";
         string combined_str = front_str + to_string(i);
         fs[combined_str] >> marker_;
@@ -75,7 +75,8 @@ int main()
 {
     VideoCapture capture;
     Mat src;
-    src = capture.open("../img/1.avi");
+    // src = capture.open("../img/1.avi");
+    src = imread("../img/src_gray_latest.jpg");
 
     vector<Car> carStateSet;
 
@@ -117,24 +118,28 @@ int main()
           cout << "could not read the image." << endl;
           return 0;
         }
+        // imwrite("src_gray_latest.jpg", src);
+        // return 0;
         // src_gray is global variable
         // cvtColor(src, src_gray, COLOR_BGR2GRAY);
-        medianBlur( src, src_blur, 3 );
+        // medianBlur( src_gray, src_blur, 1 );
         // imshow("src_blur", src_blur);
-        threshold(src_blur, src_blur, 60, 255, THRESH_BINARY);
+        threshold(src, src_blur, 60, 255, THRESH_BINARY);
         // imshow("threshold", src_blur);
-        erode(src_blur, src_blur, kernel);
+        // erode(src_blur, src_blur, kernel);
         // imshow("dilate", src_blur);
         vector<Point2f> pointSet;
-        thresh_callback( src_blur, pointSet);
+        thresh_callback(src_blur, pointSet);
       
         int num = 0;
         // loop all the point to classify them 
         for(;;) 
         {
             if (pointSet.size() != 0)
-               classificationCar(&pointSet, 
+            {
+                classificationCar(&pointSet, 
                       car_set); // carSet -> global variable
+            }
             else
                break;
         }
@@ -149,7 +154,8 @@ int main()
         // output car attribution
         for (auto iter = car_set.begin(); iter != car_set.end();)
         {
-            // if ((*iter).pointSet.size() <= 0)
+            // cout << "point_size: " << (*iter).pointSet.size() << endl;
+            // if ((*iter).pointSet.size() == 0)
             //     continue;
             getCarKeyAttribution(*iter);
             Point2f medianPoint = (*iter).medianPoint;
@@ -157,17 +163,17 @@ int main()
             double slope = (*iter).slope;
             Point3f targetPoint = (*iter).target;
 
-            // cout << "marker: " << marker << endl;
-            // // if (marker == 0)
-            // //   return 0;
-            // cout << "slope: " << slope << endl;  
+            cout << "marker: " << marker << endl;
+            // if (marker == 0)
+            //   return 0;
+            cout << "slope: " << slope << endl;  
             
             // loaded from the first line
             Point3f worldPoint;
             pointToWorld(medianPoint, worldPoint, rvecM1, 
                          tvec1, cameraMatrix, s);
             // cout << "worldPoint: " << worldPoint << "mm" << endl;
-            // cout << medianPoint << endl;
+            cout << medianPoint << endl;
             //if (targetPoint.y == 0) 
                // targetPoint = worldPoint + gap_point;
             //cout << "target: " << targetPoint << endl;
@@ -182,23 +188,23 @@ int main()
                 pointToWorld(lastMedianPoint, lastWorldPoint, 
                         rvecM1, tvec1, cameraMatrix, s);  
             
-                // Point3f speed_three_dim = (worldPoint -
-                //         lastWorldPoint) / consumeTime * 1000;
+                Point3f speed_three_dim = (worldPoint -
+                        lastWorldPoint) / consumeTime * 1000;
                 //cout << "speed_three_dim: " << speed_three_dim << endl;
                 // filter data from kalman
                 // add calculated value into Kalman when moving
                 //if (lastMedianPoint != medianPoint)
                   //  slope = getSlope(lastMedianPoint, medianPoint);
-                // filteredSlope = myFilter.getFilteredValue(slope);
+                filteredSlope = myFilter.getFilteredValue(slope);
         
                 float speed = sqrt(pow(worldPoint.x - 
                     lastWorldPoint.x, 2) + pow(worldPoint.y - 
                     lastWorldPoint.y, 2)) / consumeTime * 1000;
-                // cout << "speed: " << speed  << "mm" << endl;
+                cout << "speed: " << speed  << "mm" << endl;
                 // filtered_speed = myFilterSpeed.getFilteredValue(speed);
                 // cout << "filteredSlope: " << filteredSlope << endl;
                 //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;
-                // deleteCar(*iter, carStateSet);
+                deleteCar(*iter, carStateSet);
 
                 // TODO
                 /*
@@ -228,4 +234,5 @@ int main()
   }
     capture.release();
     return 0;
+
 }

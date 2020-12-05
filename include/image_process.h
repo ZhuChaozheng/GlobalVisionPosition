@@ -24,6 +24,7 @@
 #define MIN_DISTANCE 24.3
 #define MINIMUM 1
 
+enum feature {SIDE, BOTTOM};
 
 using namespace cv;
 using namespace std;
@@ -39,7 +40,7 @@ class Car
 {
 public:
 	int marker_; // marker
-	Point medianPoint; // medianPoint
+	Point2f medianPoint; // medianPoint
 	Point2f first; // vertex
 	Point2f second; // one point of bottom line
 	Point2f third; // the other point of bottom line
@@ -90,21 +91,25 @@ bool less_second(const point & m1, const point & m2) {
 		return m1.first < m2.first;
 }
 
-int thresh = 120; // gray
+int thresh = 30; // gray
 // int thresh = 255; // colour
 RNG rng(12345);
 Mat src_gray;
 Mat cimage;
 
 bool cmp(const Point2f a, const Point2f b);
-void thresh_callback(const Mat& src_gray, 
-		vector<Point2f>& newPointSet);
+void thresh_callback(const Mat &src_gray, 
+		vector<Point2f> &pointSet);
+float GetCross(Point2f &p1, Point2f &p2, Point2f &p);
+bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p);
+// bool PointNeighbourVector(const Point2f currentPoint, 
+// 		vector<Point2f>	double_dup_point_set);
 bool exist(Car& car, vector<Car>& carStateSet, Car& lastCar);
 void refine_point_set(const vector<Point2f>& pointSet, 
 		vector<Point2f>& newPointSet);
 bool neighbourPoint(Point2f pointA, Point2f pointB);
-void classificationCar(vector<Point2f>* pointSet, 
-		vector<Car>& carSet);
+void classificationCar(vector<Point2f> *pointSet, 
+		vector<Car> &carSet);
 double getPixelDistance(Point2f pointA, Point2f pointB);
 void getCarKeyAttribution(Car& car);
 int findKeyPoint(Point2f& point, Point2f& tempPoint, 
@@ -114,7 +119,7 @@ void determineTriangleVertex(vector<Point2f>&
 		pointSet, Car& car);
 double getAbsoluteOrientation(vector<Point2f>& 
 		pointSet, Car& car);
-double getSlope(Point first, Point second);
+double getSlope(Point2f first, Point2f second);
 
 double get3dSlope(Point3f first, Point3f second);
 
