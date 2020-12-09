@@ -103,7 +103,7 @@ int main()
         iter ++;
     }
     // return 0;
-    Mat src_blur;
+    Mat src_thresh;
     EnumDevice();
     InitCamera();
     Mat kernel = getStructuringElement(
@@ -124,12 +124,12 @@ int main()
         // cvtColor(src, src_gray, COLOR_BGR2GRAY);
         // medianBlur( src_gray, src_blur, 1 );
         // imshow("src_blur", src_blur);
-        threshold(src, src_blur, 60, 255, THRESH_BINARY);
+        threshold(src, src_thresh, 60, 255, THRESH_BINARY);
         // imshow("threshold", src_blur);
         // erode(src_blur, src_blur, kernel);
         // imshow("dilate", src_blur);
         vector<Point2f> pointSet;
-        thresh_callback(src_blur, pointSet);
+        thresh_callback(src_thresh, pointSet);
       
         int num = 0;
         // loop all the point to classify them 
@@ -164,7 +164,7 @@ int main()
             Point3f targetPoint = (*iter).target;
 
             cout << "marker: " << marker << endl;
-            // if (marker == 0)
+            // if (marker != 0 | marker != 1)
             //   return 0;
             cout << "slope: " << slope << endl;  
             
@@ -202,7 +202,7 @@ int main()
                     lastWorldPoint.y, 2)) / consumeTime * 1000;
                 cout << "speed: " << speed  << "mm" << endl;
                 // filtered_speed = myFilterSpeed.getFilteredValue(speed);
-                // cout << "filteredSlope: " << filteredSlope << endl;
+                cout << "filteredSlope: " << filteredSlope << endl;
                 //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;
                 deleteCar(*iter, carStateSet);
 

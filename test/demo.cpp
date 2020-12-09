@@ -203,73 +203,78 @@ int main()
     
     Mat src_thresh;
   	while (1) 
-  	{
-        // src -> global variable
+    {
         StartGrabStream(src);
         // src = imread( "../img/src_gray.jpg", 1 );
         if (src.empty())
         {
-            cout << "could not read the image." << endl;
-            return 0;
+          cout << "could not read the image." << endl;
+          return 0;
         }
+        // imwrite("src_gray_latest.jpg", src);
+        // return 0;
         // src_gray is global variable
-        // GaussianBlur(src, src_blur, Size(7, 7),
-        //         0, 0); 
-        // adaptiveThreshold(src_blur, src_thresh, 
-        //         maxVal, adaptiveMethod, 
-        //         thresholdType, blockSize, 
-        //         constValue); 
-        // morphologyEx(src_thresh, src_morph, MORPH_DILATE, 
-        //         kernel);
+        // cvtColor(src, src_gray, COLOR_BGR2GRAY);
+        // medianBlur( src_gray, src_blur, 1 );
+        // imshow("src_blur", src_blur);
         threshold(src, src_thresh, 60, 255, THRESH_BINARY);
+        imshow("threshold", src_thresh);
+        // erode(src_blur, src_blur, kernel);
+        // imshow("dilate", src_blur);
         vector<Point2f> pointSet;
         thresh_callback(src_thresh, pointSet);
-        
+      
         int num = 0;
         // loop all the point to classify them 
         for(;;) 
         {
             if (pointSet.size() != 0)
-               classificationCar(&pointSet, 
+            {
+                classificationCar(&pointSet, 
                       car_set); // carSet -> global variable
+            }
             else
                break;
         }
-  	    // consume time 
-		clock_t currentTime = clock();
-		double consumeTime = 1000 * (currentTime - 
-            lastTime) / (double)CLOCKS_PER_SEC;
-		cout << "time" << consumeTime << "ms" << endl;
-		cout << "fps: " << 1000 / consumeTime << "Hz" << endl;
 
-  	    // output car attribution
-  	    for (auto iter = car_set.begin(); iter != car_set.end();)
-  	    {
-	    	getCarKeyAttribution(*iter);
-	    	Point2f medianPoint = (*iter).medianPoint;
-	    	int marker = (*iter).marker_;
-	    	double slope = (*iter).slope;
+        // consume time 
+        clock_t currentTime = clock();
+        double consumeTime = 1000 * (currentTime - 
+            lastTime) / (double)CLOCKS_PER_SEC;
+        cout << "time" << consumeTime << "ms" << endl;
+        cout << "fps: " << 1000 / consumeTime << "Hz" << endl;
+
+        // output car attribution
+        for (auto iter = car_set.begin(); iter != car_set.end();)
+        {
+            // cout << "point_size: " << (*iter).pointSet.size() << endl;
+            // if ((*iter).pointSet.size() == 0)
+            //     continue;
+            getCarKeyAttribution(*iter);
+            Point2f medianPoint = (*iter).medianPoint;
+            int marker = (*iter).marker_;
+            double slope = (*iter).slope;
             Point3f targetPoint = (*iter).target;
 
-	    	cout << "marker: " << marker << endl;
-            // if (marker == 0)
-            //   return 0;
-	    	cout << "slope: " << slope << endl;  
+            cout << "marker: " << marker << endl;
+            // if (marker != 0 | marker != 1)
+            //   continue;
+            cout << "slope: " << slope << endl;  
             
-  			// loaded from the first line
+            // loaded from the first line
             Point3f worldPoint;
-  			pointToWorld(medianPoint, worldPoint, rvecM1, 
- 						 tvec1, cameraMatrix, s);
- 			// cout << "worldPoint: " << worldPoint << "mm" << endl;
-  			cout << medianPoint << endl;
+            pointToWorld(medianPoint, worldPoint, rvecM1, 
+                         tvec1, cameraMatrix, s);
+            // cout << "worldPoint: " << worldPoint << "mm" << endl;
+            cout << medianPoint << endl;
             //if (targetPoint.y == 0) 
                // targetPoint = worldPoint + gap_point;
             //cout << "target: " << targetPoint << endl;
             Car lastCar;
 
-  			if (exist((*iter), carStateSet, lastCar))
-  			{
-				Point lastMedianPoint = lastCar.medianPoint;
+            if (exist((*iter), carStateSet, lastCar))
+            {
+                Point lastMedianPoint = lastCar.medianPoint;
                 double lastSlope = lastCar.slope;
                 Point3f lastWorldPoint;
                 // loaded parameters from the first line
@@ -278,13 +283,13 @@ int main()
             
                 Point3f speed_three_dim = (worldPoint -
                         lastWorldPoint) / consumeTime * 1000;
-		//cout << "speed_three_dim: " << speed_three_dim << endl;
+                //cout << "speed_three_dim: " << speed_three_dim << endl;
                 // filter data from kalman
                 // add calculated value into Kalman when moving
                 //if (lastMedianPoint != medianPoint)
                   //  slope = getSlope(lastMedianPoint, medianPoint);
                 filteredSlope = myFilter.getFilteredValue(slope);
-		
+        
                 float speed = sqrt(pow(worldPoint.x - 
                     lastWorldPoint.x, 2) + pow(worldPoint.y - 
                     lastWorldPoint.y, 2)) / consumeTime * 1000;
@@ -309,15 +314,18 @@ int main()
                 
                 // Point test_point(594, 306); 
                 controlSpeedAndAngular(target_speed, 
-                        target_angel, speed_three_dim, filteredSlope, marker);
-			}
-  			
-    		carStateSet.push_back((*iter));
+                        target_angel, speed_three_dim, 
+                        slope, marker);
+            }
+            
+            carStateSet.push_back((*iter));
 
-    	  iter ++;
-      	}   
-    	  // update the last state
-    		lastTime = currentTime;
-    }
+          iter ++;
+        }   
+        
+        // update the last state
+        lastTime = currentTime;
+  }
+    return 0;
 
 }

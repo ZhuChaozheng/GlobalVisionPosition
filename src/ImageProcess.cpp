@@ -69,6 +69,8 @@ void thresh_callback(const Mat &src_gray,
     vector<RotatedRect> dup_rectangle_set;
     for (size_t t = 0; t < contours.size(); t++) 
     {
+    	drawContours(cimage, contours, static_cast<int>(t), 
+	                Scalar(255, 0, 255), 2, 8);   
         // double area = contourArea(contours[t]);
         // only select specific area
         // if (area < 4000 | area > 4500) continue;
@@ -83,8 +85,7 @@ void thresh_callback(const Mat &src_gray,
         float rate = w / h;
 
         double perimeter = arcLength(contours[t], true);
-        // drawContours(cimage, contours, static_cast<int>(t), 
-	       //          Scalar(255, 0, 255), 2, 8);    
+         
         
         if (perimeter < 130 | perimeter > 300 | rate < 0.85)
         	continue;
@@ -179,8 +180,9 @@ void thresh_callback(const Mat &src_gray,
 	        //         Scalar(0, 0, 255), 2, 8);
     	}
     }
+    namedWindow( "thresh_output", 1 );
     imshow("thresh_output", cimage);
-    waitKey(20);
+    waitKey(5);
     cout << "size(): " << pointSet.size() << endl;
     // imwrite("cimage.jpg", cimage);
     /*
