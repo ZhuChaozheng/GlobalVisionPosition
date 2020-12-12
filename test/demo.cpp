@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ctype.h>
 #include <vector>
+#include <opencv2/plot.hpp>
 #include "timer.h"
 #include "kalman.h"
 #include "image_process.h"
@@ -126,10 +127,10 @@ void controlSpeedAndAngular(Point3f target_speed,
     double error_angel = filteredSlope - target_angel;
     // double error_angel = filteredSlope - target_angel;
      
-    if( error_angel < -180)
-        error_angel = error_angel+360;
-    else if( error_angel > 180)
-        error_angel = error_angel-360;
+    // if( error_angel < -180)
+    //     error_angel = error_angel+360;
+    // else if( error_angel > 180)
+    //     error_angel = error_angel-360;
     // update parameter
     pid_turn.set_pid(param_turn_p, param_turn_i, param_turn_d);
     if (abs(error_angel) > 5)
@@ -156,15 +157,16 @@ void controlSpeedAndAngular(Point3f target_speed,
     //wp_angel = 0;
     wp_move = 500;	
     float duty_left = -wp_angel/2 + wp_move; 
-    duty_left *= -1;
+    // duty_left *= -1;
     float duty_right = wp_angel/2 + wp_move;
-
+    cout << "duty_left: " << duty_left << endl;
+    cout << "duty_right: " << duty_right << endl;
     // combinate the corresponding command
     a[1] = (unsigned char)((((short)duty_left)>>8) & 0xff);
     a[2] = (unsigned char)(((short)duty_left) & 0xff);
     a[3] = (unsigned char)((((short)duty_right)>>8) & 0xff);
     a[4] = (unsigned char)(((short)duty_right) & 0xff);
-    		
+    
     comm1.send_data(a);
 }
 
@@ -183,13 +185,38 @@ int main()
     vector<Car> carStateSet;
     Point3f gap_point(0, 10000, 0);
     init();
+    
     // Initialize Data
-    vector<double> sine;
+    // define the angle range of 0-360
+    vector<double> sine_angle;
+    for( int t = 0; t < 100; t++ ){
+        sine_angle.push_back( (rand() % 360));
+    }
     // Create Ploter
-    Mat data(sine);
-    // Ptr<plot::Plot2d> plot = plot::createPlot2d(data);
-    int t = 0; // cal num
+    cv::Mat data_angle( sine_angle );
+    Ptr<cv::plot::Plot2d> plot_angle = 
+            cv::plot::Plot2d::create( data_angle );
 
+    // define the speed range of 0-100
+    vector<double> sine_speed;
+    for( int t = 0; t < 100; t++ ){
+        sine_speed.push_back( (rand() % 100));
+    }
+    // Create Ploter
+    cv::Mat data_speed( sine_speed );
+    Ptr<cv::plot::Plot2d> plot_speed = 
+            cv::plot::Plot2d::create( data_speed );
+
+    // define the manhattan distance range of 0-100
+    vector<double> sine_manhattan_distance;
+    for( int t = 0; t < 100; t++ ){
+        sine_manhattan_distance.push_back( (rand() % 100));
+    }
+    // Create Ploter
+    cv::Mat data_manhattan_distance( sine_manhattan_distance );
+    Ptr<cv::plot::Plot2d> plot_manhattan_distance = 
+            cv::plot::Plot2d::create( data_manhattan_distance );
+    
     // init parameter of pid
     ConfigParamtersRead(marker_, p_, i_, 
             d_, ip_, port_);
@@ -211,16 +238,8 @@ int main()
           cout << "could not read the image." << endl;
           return 0;
         }
-        // imwrite("src_gray_latest.jpg", src);
-        // return 0;
-        // src_gray is global variable
-        // cvtColor(src, src_gray, COLOR_BGR2GRAY);
-        // medianBlur( src_gray, src_blur, 1 );
-        // imshow("src_blur", src_blur);
         threshold(src, src_thresh, 60, 255, THRESH_BINARY);
-        imshow("threshold", src_thresh);
-        // erode(src_blur, src_blur, kernel);
-        // imshow("dilate", src_blur);
+        imshow("src_thresh", src_thresh);
         vector<Point2f> pointSet;
         thresh_callback(src_thresh, pointSet);
       
@@ -260,6 +279,14 @@ int main()
             // if (marker != 0 | marker != 1)
             //   continue;
             cout << "slope: " << slope << endl;  
+            // plot curve
+            sine_angle.erase(sine_angle.begin());
+            sine_angle.push_back(slope);        
+            // Render Plot Image
+            Mat image;
+            plot_angle->render( image );
+            // Show Image
+            imshow("curve_angle", image ); 
             
             // loaded from the first line
             Point3f worldPoint;
@@ -294,6 +321,14 @@ int main()
                     lastWorldPoint.x, 2) + pow(worldPoint.y - 
                     lastWorldPoint.y, 2)) / consumeTime * 1000;
                 cout << "speed: " << speed  << "mm" << endl;
+                // plot curve
+                sine_speed.erase(sine_speed.begin());
+                sine_speed.push_back(speed);        
+                // Render Plot Image
+                Mat image_speed;
+                plot_speed->render( image_speed );
+                // Show Image
+                imshow("curve_speed", image_speed ); 
                 // filtered_speed = myFilterSpeed.getFilteredValue(speed);
                 // cout << "filteredSlope: " << filteredSlope << endl;
                 //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;
@@ -325,7 +360,8 @@ int main()
         
         // update the last state
         lastTime = currentTime;
-  }
+    }
     return 0;
 
 }
+    

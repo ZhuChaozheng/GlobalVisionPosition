@@ -13,7 +13,7 @@
    
   
 #define DEST_PORT 10000  
-#define DSET_IP_ADDRESS  "192.168.43.112"   
+#define DSET_IP_ADDRESS  "192.168.43.117"   
 
 class udp
 {
@@ -33,17 +33,19 @@ class udp
             addr_serv.sin_family = AF_INET;  
             addr_serv.sin_addr.s_addr = inet_addr(DSET_IP_ADDRESS);  
             addr_serv.sin_port = htons(DEST_PORT);  
-            len = sizeof(addr_serv);
-            
+            len = sizeof(addr_serv);   
         }
         int send_data(const char* send_buf)
         {
             int send_num; 
             //char send_buf[20] = "hey, who are you?";    
-      
             //printf("client send: %s\n", send_buf);  
-    
-            send_num = sendto(sock_fd, send_buf, strlen(send_buf), 0, (struct sockaddr *)&addr_serv, len);  
+            // for (int i = 0; i < 5; i++)
+            // cout << "len " << strlen(send_buf) << endl;
+            // for(int i = 0; i < 6; i++)
+            //     cout << int(send_buf[i]) << endl;
+            send_num = sendto(sock_fd, send_buf, 
+                6, 0, (struct sockaddr *)&addr_serv, len);  
     
             if(send_num < 0)  
             {  
