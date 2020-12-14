@@ -32,12 +32,33 @@ class pid
         }
 
         float get_pid(float error, float scalar){
-            // cout << _p << " hhh " << _i << " " << _d << endl;
+            /* if( abs(error)>5)
+              {
+               _p=-1.1; 
+               _i=1.1;
+               _d=0.4;
+	      
+              }
+             else
+             {
+               _p=-0.9; 
+               _i=1.2;
+               _d=0.5;
+             }*/
+            //    _p=-0.6; 
+            //    _i=0.9;
+            //    _d=1.0;
+            // _i_max=300;
+            cout << _p << " hhh " << _i << " " << _d << endl;
             //Get now time
             struct timeval tv;
 	        gettimeofday( &tv, NULL );
 	        time_t tnow = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-            
+   //         if( _flag==0)
+    //          {
+    //            _flag=1;
+    //           _last_tim=tnow;
+    //           }
             int dt = tnow - _last_tim; // on ms
             float output = 0;
             
@@ -48,7 +69,7 @@ class pid
             }
             
             _last_tim = tnow;
-            float delta_time = dt / 1000; // on s
+            float delta_time = dt / 1000.0; // on s
             output += error * _p;
             if ( abs(_d) > 0 && dt > 0 ) {
                 float derivative = 0;
@@ -67,12 +88,15 @@ class pid
                 output += _d * derivative; 
             }
             output *= scalar;
+
             if( abs(_i) > 0 && dt > 0 ) {
                 _integrator += ( error * _i ) * scalar * delta_time;
-                if( _integrator < -_i_max )
+	
+                if( _integrator < -_i_max ) 
                     _integrator = -_i_max;
                 else if( _integrator > _i_max )
                     _integrator = _i_max;
+
                 output += _integrator;
             }
             return output;
@@ -87,6 +111,7 @@ class pid
         float _last_derivative;
         time_t _last_tim;
         float _rc;
+        int _flag=0;
 };
 
 #endif
