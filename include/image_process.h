@@ -1,7 +1,7 @@
 /**
  * created by Jason 
  * 2020.6.13
- * fetch the colorful blocks from image
+ * fetch the blocks from gray gimage
  */
 
 #ifndef IMAGE_PROCESS_H
@@ -16,6 +16,7 @@
 #include <vector>
 #include <algorithm>
 #include <math.h> // atan
+#include "car.h"
 
 #define PI 3.14159265
 
@@ -35,33 +36,6 @@ public:
 	Point2f point;
 	int value;
 };
-
-class Car
-{
-public:
-	int marker_; // marker
-	Point2f medianPoint; // medianPoint
-	Point2f first; // vertex
-	Point2f second; // one point of bottom line
-	Point2f third; // the other point of bottom line
-	double slope; // slope
-	Point3f accelerate; // accelerate, x, y
-	double angularVelocity;// angular velocity, yaw
-	vector<Point2f> pointSet; 
-	Point3f target; // target Point
-	float p_;
-	float i_;
-	float d_;
-	string ip_;
-	int port_;
-
-public:
-	Car(int marker, float P, float I, float D, 
-			string ip, int port);
-	Car();
-};
-
-
 
 // define graph
 typedef Point2f Vertex; // vertex is point type
@@ -105,8 +79,6 @@ bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p);
 // bool PointNeighbourVector(const Point2f currentPoint, 
 // 		vector<Point2f>	double_dup_point_set);
 bool exist(Car& car, vector<Car>& carStateSet, Car& lastCar);
-void refine_point_set(const vector<Point2f>& pointSet, 
-		vector<Point2f>& newPointSet);
 bool neighbourPoint(Point2f pointA, Point2f pointB);
 void classificationCar(vector<Point2f> *pointSet, 
 		vector<Car> &carSet);

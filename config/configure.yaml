@@ -22,35 +22,44 @@ tvec1: !!opencv-matrix
  
 # 0
 marker_0: 0
-ip_0: "192.168.43.111"
+ip_0: "192.168.43.117"
 port_0: 10000
-p_0: -0.6
-i_0: -0.9
-d_0: 0.65
+p_0: -0.5
+i_0: -0.8
+d_0: 0.3
+target_slope_0: 180.0
+target_speed_0: 13.0
+
 
 # 1
 marker_1: 1
 ip_1: "192.168.43.111"
 port_1: 10000
-p_1: -1.5
-i_1: 1
-d_1: 1.02
+p_1: -0.5
+i_1: -0.8
+d_1: 0.3
+target_slope_1: 0.0
+target_speed_1: 13.0
 
 # 2
 marker_2: 2
-ip_2: "192.168.43.153"
+ip_2: "192.168.43.113"
 port_2: 10000
-p_2: -2.5
-i_2: 2
-d_2: 2.02
+p_2: -0.5
+i_2: -0.8
+d_2: 0.2
+target_slope_2: 0.0
+target_speed_2: 13.0
 
 # 3
 marker_3: 3
-ip_3: "192.168.43.119"
+ip_3: "192.168.43.113"
 port_3: 10000
 p_3: -3.5
 i_3: 3
 d_3: 3.02
+target_slope_3: 90.0
+target_speed_3: 13.0
 
 # 4
 marker_4: 4
@@ -59,6 +68,8 @@ port_4: 10000
 p_4: -4.5
 i_4: 4
 d_4: 4.02
+target_slope_4: 90.0
+target_speed_4: 13.0
 
 # 5
 marker_5: 5
@@ -67,6 +78,8 @@ port_5: 10000
 p_5: -5.5
 i_5: 5
 d_5: 5.01
+target_slope_5: 90.0
+target_speed_5: 13.0
 
 # 6
 marker_6: 6
@@ -75,6 +88,8 @@ port_6: 10000
 p_6: -6.5
 i_6: 6
 d_6: 6.05
+target_slope_6: 90.0
+target_speed_6: 13.0
 
 # 7
 marker_7: 7
@@ -83,6 +98,8 @@ port_7: 10000
 p_7: -7.5
 i_7: 7
 d_7: 7.02
+target_slope_7: 90.0
+target_speed_7: 13.0
 
 
 

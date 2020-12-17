@@ -1,15 +1,5 @@
 #include "image_process.h"
 
-Car::Car(int marker, float P, float I, float D, 
-			string ip, int port)
-{ 
-	marker_ = marker; p_ = P; 
-	i_ = I; d_ = D; ip_ = ip; 
-	port_ = port;
-}
-
-Car::Car() {}
-
 Point2f getAveragePoint(vector<Point2f>& pointSet)
 {
 	Point2f averagePoint;
@@ -55,25 +45,17 @@ void thresh_callback(const Mat &src_gray,
 {
 	Mat thresh_output;
 	thresh_output = src_gray.clone();
-	
-
-	// Canny( src_gray, thresh_output, 3, 9, 3 );
-	// imshow("thresh_output_1", thresh_output);
     // find contours
-    // vector<Point2f> newPointSet;
     vector<vector<Point>> contours;
     findContours( src_gray, contours, RETR_TREE, 
             CHAIN_APPROX_SIMPLE);
-    // vector<Point2f> pointSet;
     cimage = Mat::zeros(thresh_output.size(), CV_8UC3); // global
     vector<RotatedRect> dup_rectangle_set;
     for (size_t t = 0; t < contours.size(); t++) 
     {
     	drawContours(cimage, contours, static_cast<int>(t), 
 	                Scalar(255, 0, 255), 2, 8);   
-        // double area = contourArea(contours[t]);
         // only select specific area
-        // if (area < 4000 | area > 4500) continue;
         RotatedRect rotatedRect = minAreaRect(contours[t]);
         Rect rect = rotatedRect.boundingRect();
         
@@ -92,10 +74,6 @@ void thresh_callback(const Mat &src_gray,
         Point2f currentPoint = rotatedRect.center;
         // TODO
         // remove the shadow of wheels
-        // cout << perimeter << " " << areaRect << " " << rate << endl;
-        // cout << "contours: " << contours << endl;
-        // drawContours(cimage, contours, static_cast<int>(t), 
-	       //          Scalar(0, 0, 255), 2, 8);      
         // remove duplicate center of rectangle
         if (dup_rectangle_set.size() == 0)
         {
@@ -111,10 +89,6 @@ void thresh_callback(const Mat &src_gray,
         	double_dup_rectangle_set.push_back(*iter);
         	iter ++;
         }
-        // bool PointNeighbourVector(Point2f currentPoint, vector<Point2f>
-        // 		double_dup_point_set)
-        // {
-
         /*
          * here, should be replaced with a special function
          * bool PointNeighbourVector(Point2f currentPoint, 
@@ -137,10 +111,6 @@ void thresh_callback(const Mat &src_gray,
 			}
 			iter ++;
         }
-        // }
-        
-        // if (PointNeighbourVector(currentPoint,
-        // 			double_dup_point_set))
 	    if (flag)
         	dup_rectangle_set.push_back(rotatedRect);
         double_dup_rectangle_set.clear();
@@ -150,10 +120,6 @@ void thresh_callback(const Mat &src_gray,
     for (size_t t = 0; t < contours.size(); t++) 
     {
         double area = contourArea(contours[t]);
-        // cout << area << endl;
-        // only select specific area
-        // cout << area << endl;
-        // if (area < 4000 | area > 4500) continue;
         RotatedRect rotated_rect = minAreaRect(contours[t]);
         // // geometry analysis
         if (area > 2 & area < 40) 
@@ -163,8 +129,6 @@ void thresh_callback(const Mat &src_gray,
 		    {
 		    	// iter is RotatedRect class
 		    	// display the position of big square
-
-		    	// rect_second = (*iter).boundingRect();
 		    	if (IsPointInRotatedRect((*iter), 
 		    				rotated_rect.center))
 		        {
@@ -175,20 +139,12 @@ void thresh_callback(const Mat &src_gray,
 		        }
 		    	iter ++;
 		    }
-		    
-	        // drawContours(cimage, contours, static_cast<int>(t), 
-	        //         Scalar(0, 0, 255), 2, 8);
     	}
     }
     namedWindow( "thresh_output", 1 );
     imshow("thresh_output", cimage);
     waitKey(5);
     cout << "size(): " << pointSet.size() << endl;
-    // imwrite("cimage.jpg", cimage);
-    /*
-     * may be this function could be removed
-     */
-    // refine_point_set(pointSet, newPointSet);
 }
 
 float GetCross(Point2f &p1, Point2f &p2, Point2f &p)
@@ -204,9 +160,7 @@ bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p)
     // Draw the bounding box
     for( int i = 0; i < 4; i++ )
     {
-    	// cout << "vtx[i]: " << vtx[i] << endl;
-    	// cout << "vtx[(i+1)%4]: " << vtx[(i+1)%4] << endl;
-        line(cimage, vtx[i], vtx[(i+1)%4], 
+    	line(cimage, vtx[i], vtx[(i+1)%4], 
         		Scalar(0, 255, 0), 1, LINE_AA);
     }
 	return (GetCross(vtx[0], vtx[1], p) * 
@@ -316,7 +270,7 @@ void classificationCar(vector<Point2f> *pointSet,
 		// search 
 		for (auto iter = car_set.begin(); iter != car_set.end();)
 		{
-			if ((*iter).marker_ == marker)
+			if ((*iter).get_marker() == marker)
 			{
 				// clear old pointset
 				(*iter).pointSet.clear();
@@ -327,7 +281,6 @@ void classificationCar(vector<Point2f> *pointSet,
 					(*iter).pointSet.push_back(*iterator);
 					iterator ++;
 				}
-				// cout << "car size: " << (*iter).pointSet.size() << endl;
 			}
 			iter ++;
 		}
@@ -393,22 +346,12 @@ Point2f getmedianPoint(Point2f first, Point2f second)
 
 void getCarKeyAttribution(Car& car)
 {
-	vector<Point2f> pointSet = car.pointSet;
-	// car.marker_ = car.pointSet.size() - 3;
-	
+	vector<Point2f> pointSet = car.get_point_set();	
 	if (pointSet.size() != 0)
 	{
-		// cout << pointSet.size() << endl;
-		car.slope = getAbsoluteOrientation(pointSet, car); // stuff a triangle
-		// cout << car.second << endl;
-		// cout << car.third << endl;
-		// car.medianPoint = getmedianPoint(
-		// 		car.second, car.third);
-		// cout << "medianPoint: " <<  car.medianPoint << endl;
-	}
-	// else
-	// 	cout << "size error in getCarKeyAttribution" << endl;
-	
+		double slope = getAbsoluteOrientation(pointSet, car); // stuff a triangle
+		car.set_slope(slope);
+	}	
 }
 
 /**
@@ -464,12 +407,10 @@ void determineTriangleVertex(vector<Point2f>& pointSet, Car& car)
 	// equals to one isosceles
 	EdgeNode edgeNode = findMaxDistance(pointSet, 0);
 	double maxDistance = edgeNode.Weight;
-	// cout << maxDistance << endl;
 	// search second max distance between points,
 	// equals to another isosceles
 	EdgeNode edgeNodeAnother = findMaxDistance(pointSet, 
 			maxDistance);
-	// cout << edgeNodeAnother.Weight << endl;
 	/*
 	 * if the side edge is the longest, then
 	 * the bottom edge is third of length.
@@ -481,28 +422,28 @@ void determineTriangleVertex(vector<Point2f>& pointSet, Car& car)
 			if (edgeNode.V1 == edgeNodeAnother.V1 |
 					edgeNode.V1 == edgeNodeAnother.V2)
 			{
-				car.first = edgeNode.V1;
-				car.second = edgeNode.V2;
+				car.set_first(edgeNode.V1);
+				car.set_second(edgeNode.V2);
 			}
 			else
 			{
-				car.first = edgeNode.V2;
-				car.second = edgeNode.V1;				
+				car.set_first(edgeNode.V2);
+				car.set_second(edgeNode.V1);			
 			}  
-			car.third = edgeNodeAnother.V2;
+			car.set_third(edgeNodeAnother.V2);
 			break;
 		case BOTTOM:
 			if (edgeNodeAnother.V1 == edgeNode.V1 |
 					edgeNodeAnother.V1 == edgeNode.V2)
 			{
-				car.first = edgeNodeAnother.V2;
+				car.set_first(edgeNodeAnother.V2);
 			}
 			else
 			{
-				car.first = edgeNodeAnother.V1;
+				car.set_first(edgeNodeAnother.V1);
 			}
-			car.second = edgeNode.V2;
-			car.third = edgeNode.V1;
+			car.set_second(edgeNode.V2);
+			car.set_third(edgeNode.V1);
 			break;
 	}
 	
@@ -518,45 +459,15 @@ double getAbsoluteOrientation(vector<Point2f>& pointSet,
 	if (pointSet.size() == 0)
 		return 0;
 	determineTriangleVertex(pointSet, car);
-	// cout << car.first << endl;
-	// Point vertex;
-	// vertex.x = int(car.first.x);
-	// vertex.y = int(car.first.y);
-//	cout << vertex << endl;
     // Find the minimum area enclosing circle
     Point2f center;
     float radius = 0;
     minEnclosingCircle(pointSet, center, radius);
-    // Point centerInt;
-    // centerInt.x = int(center.x);
-    // centerInt.y = int(center.y);
-  //  cout << center << endl;
-   // cout << centerInt << endl;
-    car.medianPoint = center;
-    // cout << "center: " << center << endl;
-    return getSlope(car.medianPoint, car.first);
+    car.set_median_point(center);
+    Point2f medianPoint = car.get_median_point();
+    Point2f first = car.get_first();
+    return getSlope(medianPoint, first);
 }
-
-Point2f getCentroid(Car car)
-{
-	Point2f centroid;
-	double sumX;
-	double sumY;
-	int num = 0;
-
-	for (auto iter = car.pointSet.begin(); iter != car.pointSet.end();)
-	{
-		sumX += (*iter).x;
-		sumY += (*iter).y;
-		iter ++;
-		num ++;
-	}
-	centroid.x = sumX / num;
-	centroid.y = sumY / num;
-
-	return centroid;
-}
-
 
 // from distance to judge the neigbhouring points
 bool neighbourPoint(Point2f pointA, Point2f pointB)
@@ -574,79 +485,8 @@ bool cmp(const Point2f a, const Point2f b){
 		return 0;
 	if (a.y > b.y)
 		return 0;
-    // return a.x==b.x?a.y>b.y:a.x>b.x;
     return 1;
 }
-
-/**
- *
- * delete the repeat items and neighbour point
- *
- * first, sort point set
- * second, remove repeat items and neighbour point
- *
- */
-void refine_point_set(const vector<Point2f>& pointSet, 
-		vector<Point2f>& newPointSet)
-{
-	// convert to vector<point> type for sorting 
-	vector<point> points;
-	for (auto iter = pointSet.begin(); 
-			iter != pointSet.end();)
-	{
-		Point2f currentPoint = *iter;
-		// cout << currentPoint << endl;
-		point my(currentPoint.x, currentPoint.y);
-		points.push_back(my);
-		iter ++;
-	}
-	sort(points.begin(), points.end(), less_second);
-
-	// after sorting, convert to vector<Point>
-	vector<Point2f> resortPointSet;
-	for(int i = 0 ; i < points.size(); i ++) 
-	{
-        // cout<<"("<<points[i].first<<","<<points[i].second<<")\n";
-        Point2f tempPoint = Point2f(points[i].first, 
-        		points[i].second);
-        resortPointSet.push_back(tempPoint);
-	}
-
-    for (auto iter = resortPointSet.begin(); 
-			iter != resortPointSet.end();)
-	{
-		Point2f currentPoint = *iter;
-		auto iterTemp = iter;
-		bool flag = true;
-		// cout << currentPoint << endl;
-		for (iterTemp++; iterTemp != resortPointSet.end();)
-		{
-			Point2f tempPoint = *iterTemp;
-
-			if (neighbourPoint(tempPoint, currentPoint)) {
-				flag = false;
-				// cout << "currentPoint" << currentPoint << " "
-				// 		<< tempPoint << endl;
-			}
-			iterTemp ++;
-		}
-		double radius = 1;
-		if (flag == true)
-		{
-			newPointSet.push_back(currentPoint);
-			// cout << currentPoint << endl;
-			circle(cimage, currentPoint, cvRound(radius), 
-				Scalar(255, 255, 255), 1, LINE_AA);
-		}
-		iter ++;
-	}
-	cout << "refine: " << newPointSet.size() << endl;
-
-   //  cout << "finish imwrite w.jpg" << endl;
-  	// imshow("w", cimage);
-  	// waitKey(50);
-}
-
 
 /**
  *
@@ -659,7 +499,7 @@ bool exist(Car& car, vector<Car>& carStateSet, Car& lastCar)
 	for(auto iter = carStateSet.begin(); 
 		iter != carStateSet.end();)
 	{
-		if (car.marker_ == (*iter).marker_)
+		if (car.get_marker() == (*iter).get_marker())
 		{
 			lastCar = *iter;
 			return true;
@@ -675,7 +515,7 @@ void deleteCar(Car& car, vector<Car>& carStateSet)
     for(auto iter = carStateSet.begin(); 
             iter != carStateSet.end();)
     {
-        if (car.marker_ == (*iter).marker_)
+        if (car.get_marker() == (*iter).get_marker())
         {
             iter = carStateSet.erase(iter);
             return;
