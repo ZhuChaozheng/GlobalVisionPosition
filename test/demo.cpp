@@ -35,29 +35,42 @@ void ConfigParamtersRead()
             FileStorage::READ);
     string front_str;
     int marker_;
-    float p_, i_, d_;
+    float slope_p_, slope_i_, slope_d_,
+            speed_p_, speed_i_, speed_d_;
     string ip_;
     int port_;
     double target_slope_; 
     float target_speed_; 
     // clear old car set
     car_set.erase(car_set.begin(), car_set.end());
-    for (int i = 0; i <= 2; i ++) {
+    for (int i = 1; i <= 1; i ++) {
         string front_str = "marker_";
         string combined_str = front_str + to_string(i);
         fs[combined_str] >> marker_;
         
-        front_str = "p_";
+        front_str = "slope_p_";
         combined_str = front_str + to_string(i);
-        fs[combined_str] >> p_;
+        fs[combined_str] >> slope_p_;
 
-        front_str = "i_";
+        front_str = "slope_i_";
         combined_str = front_str + to_string(i);
-        fs[combined_str] >> i_;
+        fs[combined_str] >> slope_i_;
 
-        front_str = "d_";
+        front_str = "slope_d_";
         combined_str = front_str + to_string(i);
-        fs[combined_str] >> d_;
+        fs[combined_str] >> slope_d_;
+
+        front_str = "speed_p_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> speed_p_;
+
+        front_str = "speed_i_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> speed_i_;
+
+        front_str = "speed_d_";
+        combined_str = front_str + to_string(i);
+        fs[combined_str] >> speed_d_;
 
         front_str = "ip_";
         combined_str = front_str + to_string(i);
@@ -75,7 +88,8 @@ void ConfigParamtersRead()
         combined_str = front_str + to_string(i);
         fs[combined_str] >> target_speed_;
         
-        Car *car = new Car(marker_, p_, i_, d_, ip_, 
+        Car *car = new Car(marker_, slope_p_, slope_i_, 
+                slope_d_, speed_p_, speed_i_, speed_d_, ip_, 
                 port_, target_slope_, target_speed_);
         car_set.push_back(*car);
     }
@@ -118,7 +132,7 @@ int main()
     // define the speed range of 0-100
     vector<double> sine_speed;
     for( int t = 0; t < 100; t++ ){
-        sine_speed.push_back( (rand() % 100));
+        sine_speed.push_back( (rand() % 300));
     }
     // Create Ploter
     cv::Mat data_speed( sine_speed );
@@ -128,7 +142,7 @@ int main()
     // define the manhattan distance range of 0-100
     vector<double> sine_manhattan_distance;
     for( int t = 0; t < 100; t++ ){
-        sine_manhattan_distance.push_back( (rand() % 360));
+        sine_manhattan_distance.push_back( (rand() % 300));
     }
     // Create Ploter
     cv::Mat data_manhattan_distance( sine_manhattan_distance );
@@ -184,26 +198,26 @@ int main()
             cout << "marker: " << marker << endl;
             cout << "slope: " << slope << endl;  
             // plot curve
-            sine_angle.erase(sine_angle.begin());
-            sine_angle.push_back(slope);        
-            // Render Plot Image
-            Mat image;
-            plot_angle->render( image );
-            // Show Image
-            imshow("curve_angle", image ); 
+            // sine_angle.erase(sine_angle.begin());
+            // sine_angle.push_back(slope);        
+            // // Render Plot Image
+            // Mat image;
+            // plot_angle->render( image );
+            // // Show Image
+            // imshow("curve_angle", image ); 
 
             // target
             // (*iter).set_target_slope(90.0);
             // (*iter).set_target_speed(13.0);
-            double target_slope = (*iter).get_target_slope();
+            double target_speed = (*iter).get_target_speed();
             // plot standard curve
             sine_manhattan_distance.erase(sine_manhattan_distance.begin());
-            sine_manhattan_distance.push_back(target_slope);        
+            sine_manhattan_distance.push_back(target_speed);        
             // Render Plot Image
             Mat image_manhattan_distance;
             plot_manhattan_distance->render( image_manhattan_distance );
             // Show Image
-            imshow("curve_standard_angle", image_manhattan_distance ); 
+            imshow("curve_standard_speed", image_manhattan_distance ); 
             
             // loaded from the first line
             Point3f worldPoint;
@@ -238,10 +252,10 @@ int main()
                 sine_speed.erase(sine_speed.begin());
                 sine_speed.push_back(speed);        
                 // Render Plot Image
-                // Mat image_speed;
-                // plot_speed->render( image_speed );
-                // // Show Image
-                // imshow("curve_speed", image_speed ); 
+                Mat image_speed;
+                plot_speed->render( image_speed );
+                // Show Image
+                imshow("curve_speed", image_speed ); 
                 // filtered_speed = myFilterSpeed.getFilteredValue(speed);
                 // cout << "filteredSlope: " << filteredSlope << endl;
                 //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;
@@ -259,7 +273,8 @@ int main()
                 pid_control.controlSpeedAndAngular(*iter);
             }
             carStateSet.push_back((*iter));
-          iter ++;
+            iter ++;
+          
         }   
         
         // update the last state

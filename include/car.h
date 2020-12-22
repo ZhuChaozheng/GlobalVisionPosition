@@ -34,20 +34,25 @@ public:
 	Point3f target_; // target Point
 	double target_slope_; // target slope
 	float target_speed_; // target speed
-	float p_;
-	float i_;
-	float d_;
+	float slope_p_;
+	float slope_i_;
+	float slope_d_;
+	float speed_p_;
+	float speed_i_;
+	float speed_d_;
 	string ip_;
 	int port_;
 
 public:
-	Car(int marker, float P, float I, float D, 
-			string ip, int port, double target_slope,
-			float target_speed);
+	Car(int marker, float slope_P, float slope_I, 
+		float slope_D, float speed_P, float speed_I, 
+		float speed_D, string ip, int port, double target_slope,
+		float target_speed);
 	Car();
 
-	void update_parameters(float P, float I, float D, 
-			string ip);
+	void update_parameters(float slope_P, float slope_I, 
+			float slope_D, float speed_P, float speed_I, 
+			float speed_D, string ip);
 
 	void set_median_point(Point2f center) { medianPoint_ = center; }
 	void set_first(Point2f first) { first_ = first; }
@@ -59,9 +64,12 @@ public:
 			{ target_slope_ = target_slope; }
 	void set_target_speed(float target_speed) 
 			{ target_speed_ = target_speed; }
-	void set_p(float P) { p_ = P; }
-	void set_i(float I) { i_ = I; }
-	void set_d(float D) { d_ = D; }
+	void set_slope_p(float P) { slope_p_ = P; }
+	void set_slope_i(float I) { slope_i_ = I; }
+	void set_slope_d(float D) { slope_d_ = D; }
+	void set_speed_p(float P) { speed_p_ = P; }
+	void set_speed_i(float I) { speed_i_ = I; }
+	void set_speed_d(float D) { speed_d_ = D; }
 	void set_ip(string ip) { ip_ = ip; }
 
 	int get_marker() { return marker_; }
@@ -74,9 +82,12 @@ public:
 	Point3f get_target() { return target_; }
 	double get_target_slope() { return target_slope_; }
 	float get_target_speed() { return target_speed_; }
-	float get_p() { return p_; }
-	float get_i() { return i_; }
-	float get_d() { return d_; }
+	float get_slope_p() { return slope_p_; }
+	float get_slope_i() { return slope_i_; }
+	float get_slope_d() { return slope_d_; }
+	float get_speed_p() { return speed_p_; }
+	float get_speed_i() { return speed_i_; }
+	float get_speed_d() { return speed_d_; }
 };
 
 #endif //CAR_H

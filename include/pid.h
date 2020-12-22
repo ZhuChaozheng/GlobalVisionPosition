@@ -15,28 +15,44 @@ using namespace std;
 class pid
 {
 public:
-    pid(float P = 0, float I = 0, float D = 0, float i_max = 0 )
+    pid(float slope_P = 0, float slope_I = 0, 
+            float slope_D = 0, float speed_P = 0, 
+            float speed_I = 0, float speed_D = 0, 
+            float i_max = 0 )
     {
-        _p = P;
-        _i = I;
-        _d = D;
+        slope_p = slope_P;
+        slope_i = slope_I;
+        slope_d = slope_D;
+        speed_p = speed_P;
+        speed_i = speed_I;
+        speed_d = speed_D;
         _i_max = abs(i_max);
         _last_error = _integrator = _last_tim = 0;
         _last_derivative = 0;
         _rc = 1/(2* pi* 20);
     }
 
-    void set_pid(float P, float I, float D) { _p = P;
-            _i = I; _d = D; }
+    void set_slope_pid(float slope_P, float slope_I, 
+            float slope_D) { slope_p = slope_P; 
+            slope_i = slope_I; slope_d = slope_D; }
 
-    float get_pid(float error, float scalar);
+    float get_slope_pid(float error, float scalar);
+
+    void set_speed_pid(float speed_P, float speed_I, 
+            float speed_D) { speed_p = speed_P; 
+            speed_i = speed_I; speed_d = speed_D; }
+
+    float get_speed_pid(float error, float scalar);
 
     void controlSpeedAndAngular(Car &car);
     
 private:
-    float _p;
-    float _i;
-    float _d;
+    float slope_p;
+    float slope_i;
+    float slope_d;
+    float speed_p;
+    float speed_i;
+    float speed_d;
     float _i_max;
     float _last_error;
     float _integrator;
