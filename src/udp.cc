@@ -27,6 +27,7 @@ int udp::send_data(const int sock_fd,
 
     if(send_num < 0)  
     {  
+        printf("sss\n");
         perror("sendto error:");  
         exit(1);  
     }

@@ -19,7 +19,7 @@ find_package(OpenCV REQUIRED)
 message(STATUS "version: ${OpenCV_VERSION}")
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-
+message(STATUS "version: ${OpenCV_INCLUDE_DIRS}")
 
 set(THIRD_PARTY_LIBS
     ${OpenCV_LIBS}

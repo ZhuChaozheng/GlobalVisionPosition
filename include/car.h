@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "kalman.h"
 
 using namespace cv;
 using namespace std;
@@ -42,6 +43,7 @@ public:
 	float speed_d_;
 	string ip_;
 	int port_;
+	Kalman filter_;
 
 public:
 	Car(int marker, float slope_P, float slope_I, 

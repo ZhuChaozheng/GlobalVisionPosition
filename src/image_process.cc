@@ -40,6 +40,7 @@ void rotatedRectROI(const Mat& src, Mat& cropped,
     getRectSubPix(rotated, rect_size, rect.center, 
             cropped);
 }
+
 void thresh_callback(const Mat &src_gray, 
 	vector<Point2f> &pointSet)
 {
@@ -50,11 +51,13 @@ void thresh_callback(const Mat &src_gray,
     findContours( src_gray, contours, RETR_TREE, 
             CHAIN_APPROX_SIMPLE);
     cimage = Mat::zeros(thresh_output.size(), CV_8UC3); // global
+    Mat barriers_image = Mat::zeros(thresh_output.size(), CV_8UC1);
     vector<RotatedRect> dup_rectangle_set;
+    vector<vector<Point>> next_notice_contours;
     for (size_t t = 0; t < contours.size(); t++) 
     {
-    	drawContours(cimage, contours, static_cast<int>(t), 
-	                Scalar(255, 0, 255), 2, 8);   
+    	// drawContours(cimage, contours, static_cast<int>(t), 
+	    //             Scalar(255, 0, 255), 2, 8);   
         // only select specific area
         RotatedRect rotatedRect = minAreaRect(contours[t]);
         Rect rect = rotatedRect.boundingRect();
@@ -67,60 +70,76 @@ void thresh_callback(const Mat &src_gray,
         float rate = w / h;
 
         double perimeter = arcLength(contours[t], true);
-         
-        
-        if (perimeter < 130 | perimeter > 300 | rate < 0.85)
-        	continue;
-        Point2f currentPoint = rotatedRect.center;
-        // TODO
-        // remove the shadow of wheels
-        // remove duplicate center of rectangle
-        if (dup_rectangle_set.size() == 0)
+        // the minimum perimeter is 240
+        if (perimeter > 230)
         {
-        	dup_rectangle_set.push_back(rotatedRect);
-        	continue;
+        	// barriers
+        	drawContours(barriers_image, contours, static_cast<int>(t), 
+	                Scalar(255, 0, 255), 2, 8);  
+        	namedWindow( "barriers_image", 1 );
+    		imshow("barriers_image", barriers_image);
         }
-        // copy vector
-        vector<RotatedRect> double_dup_rectangle_set;
-        for(auto iter = dup_rectangle_set.begin(); 
-        		iter != dup_rectangle_set.end();)
+        else if (perimeter > 130)
+        // if (perimeter < 130 | perimeter > 230 | rate < 0.85)
+        // 	continue;
         {
+        	Point2f currentPoint = rotatedRect.center;
+	        // TODO
+	        // remove the shadow of wheels
+	        // remove duplicate center of rectangle
+	        if (dup_rectangle_set.size() == 0)
+	        {
+	        	dup_rectangle_set.push_back(rotatedRect);
+	        	continue;
+	        }
+	        // copy vector
+	        vector<RotatedRect> double_dup_rectangle_set;
+	        for(auto iter = dup_rectangle_set.begin(); 
+	        		iter != dup_rectangle_set.end();)
+	        {
 
-        	double_dup_rectangle_set.push_back(*iter);
-        	iter ++;
+	        	double_dup_rectangle_set.push_back(*iter);
+	        	iter ++;
+	        }
+	        /*
+	         * here, should be replaced with a special function
+	         * bool PointNeighbourVector(Point2f currentPoint, 
+	         *  vector<Point2f> double_dup_point_set)
+	         *
+	         */
+	    	bool flag = true;
+	        for(auto iter = double_dup_rectangle_set.begin(); 
+	        		iter != double_dup_rectangle_set.end();)
+	        {
+	        	Point2f tempPoint = (*iter).center;	        	
+	        	if (!neighbourPoint(tempPoint, currentPoint))
+				{
+					flag = true;
+				}
+				else
+				{
+					flag = false;
+					break;
+				}
+				iter ++;
+	        }
+		    if (flag)
+	        	dup_rectangle_set.push_back(rotatedRect);
+	        double_dup_rectangle_set.clear();
         }
-        /*
-         * here, should be replaced with a special function
-         * bool PointNeighbourVector(Point2f currentPoint, 
-         *  vector<Point2f> double_dup_point_set)
-         *
-         */
-    	bool flag = true;
-        for(auto iter = double_dup_rectangle_set.begin(); 
-        		iter != double_dup_rectangle_set.end();)
+        else
         {
-        	Point2f tempPoint = (*iter).center;	        	
-        	if (!neighbourPoint(tempPoint, currentPoint))
-			{
-				flag = true;
-			}
-			else
-			{
-				flag = false;
-				break;
-			}
-			iter ++;
+        	// next notice points
+        	next_notice_contours.push_back(contours[t]);
+        	// cout << "next: " << next_notice_contours.size() << endl;
         }
-	    if (flag)
-        	dup_rectangle_set.push_back(rotatedRect);
-        double_dup_rectangle_set.clear();
     }
     float radius = 4;
     int i = 0;
-    for (size_t t = 0; t < contours.size(); t++) 
+    for (size_t t = 0; t < next_notice_contours.size(); t++) 
     {
-        double area = contourArea(contours[t]);
-        RotatedRect rotated_rect = minAreaRect(contours[t]);
+        double area = contourArea(next_notice_contours[t]);
+        RotatedRect rotated_rect = minAreaRect(next_notice_contours[t]);
         // // geometry analysis
         if (area > 2 & area < 40) 
         {
@@ -144,7 +163,7 @@ void thresh_callback(const Mat &src_gray,
     namedWindow( "thresh_output", 1 );
     imshow("thresh_output", cimage);
     waitKey(5);
-    cout << "size(): " << pointSet.size() << endl;
+    // cout << "size(): " << pointSet.size() << endl;
 }
 
 float GetCross(Point2f &p1, Point2f &p2, Point2f &p)

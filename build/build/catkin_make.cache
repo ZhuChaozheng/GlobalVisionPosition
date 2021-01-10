@@ -1,0 +1,2 @@
+
+-DCATKIN_DEVEL_PREFIX=/home/blackant/GlobalVisionPosition/build/devel -DCMAKE_INSTALL_PREFIX=/home/blackant/GlobalVisionPosition/build/install -G Unix Makefiles

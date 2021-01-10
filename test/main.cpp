@@ -42,7 +42,7 @@ void ConfigParamtersRead()
     float target_speed_; 
     // clear old car set
     car_set.erase(car_set.begin(), car_set.end());
-    for (int i = 0; i <= 2; i ++) {
+    for (int i = 0; i <= 6; i ++) {
         string front_str = "marker_";
         string combined_str = front_str + to_string(i);
         fs[combined_str] >> marker_;

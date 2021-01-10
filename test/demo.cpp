@@ -43,7 +43,7 @@ void ConfigParamtersRead()
     float target_speed_; 
     // clear old car set
     car_set.erase(car_set.begin(), car_set.end());
-    for (int i = 1; i <= 1; i ++) {
+    for (int i = 0; i <= 6; i ++) {
         string front_str = "marker_";
         string combined_str = front_str + to_string(i);
         fs[combined_str] >> marker_;
@@ -162,7 +162,12 @@ int main()
             cout << "could not read the image." << endl;
             return 0;
         }
+        // blur(src, src, Size(3, 3));
+        // Canny( src, src_thresh, 50, 50 * 2 );
+
         threshold(src, src_thresh, 60, 255, THRESH_BINARY);
+        // imshow("src_thresh", src_thresh);
+
         vector<Point2f> pointSet;
         thresh_callback(src_thresh, pointSet);
       
@@ -196,11 +201,13 @@ int main()
             Point3f targetPoint = (*iter).get_target();
 
             cout << "marker: " << marker << endl;
-            cout << "slope: " << slope << endl;  
+            cout << "slope: " << slope << endl;
+            double filteredSlope = (*iter).filter_.getFilteredValue(slope);
+            // cout << "filteredSlope: " << filteredSlope << endl;
             // plot curve
-            // sine_angle.erase(sine_angle.begin());
-            // sine_angle.push_back(slope);        
-            // // Render Plot Image
+            sine_angle.erase(sine_angle.begin());
+            sine_angle.push_back(slope);        
+            // Render Plot Image
             // Mat image;
             // plot_angle->render( image );
             // // Show Image
@@ -211,13 +218,13 @@ int main()
             // (*iter).set_target_speed(13.0);
             double target_speed = (*iter).get_target_speed();
             // plot standard curve
-            sine_manhattan_distance.erase(sine_manhattan_distance.begin());
-            sine_manhattan_distance.push_back(target_speed);        
-            // Render Plot Image
-            Mat image_manhattan_distance;
-            plot_manhattan_distance->render( image_manhattan_distance );
-            // Show Image
-            imshow("curve_standard_speed", image_manhattan_distance ); 
+            // sine_manhattan_distance.erase(sine_manhattan_distance.begin());
+            // sine_manhattan_distance.push_back(target_speed);        
+            // // Render Plot Image
+            // Mat image_manhattan_distance;
+            // plot_manhattan_distance->render( image_manhattan_distance );
+            // // Show Image
+            // imshow("curve_standard_speed", image_manhattan_distance ); 
             
             // loaded from the first line
             Point3f worldPoint;
@@ -252,10 +259,10 @@ int main()
                 sine_speed.erase(sine_speed.begin());
                 sine_speed.push_back(speed);        
                 // Render Plot Image
-                Mat image_speed;
-                plot_speed->render( image_speed );
-                // Show Image
-                imshow("curve_speed", image_speed ); 
+                // Mat image_speed;
+                // plot_speed->render( image_speed );
+                // // Show Image
+                // imshow("curve_speed", image_speed ); 
                 // filtered_speed = myFilterSpeed.getFilteredValue(speed);
                 // cout << "filteredSlope: " << filteredSlope << endl;
                 //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;

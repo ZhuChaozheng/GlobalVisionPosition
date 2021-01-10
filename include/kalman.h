@@ -8,13 +8,19 @@
 class Kalman {
   private:
     /* Kalman filter variables */
-    double q; //process noise covariance
-    double r; //measurement noise covariance
-    double x; //value
-    double p; //estimation error covariance
+    double q = 0.125; //process noise covariance
+    double r = 32; //measurement noise covariance
+    double x = 0; //value
+    double p = 1023; //estimation error covariance
     double k; //kalman gain
     
   public:
+    Kalman() {
+        this->q = 0.125;
+        this->r = 32;
+        this->p = 1023;
+        this->x = 0; 
+    }
     Kalman(double process_noise, double sensor_noise, double estimated_error, double intial_value) {
       /* The variables are x for the filtered value, q for the process noise, 
          r for the sensor noise, p for the estimated error and k for the Kalman Gain. 
