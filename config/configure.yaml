@@ -1,0 +1,158 @@
+%YAML:1.0
+---
+s: 203067
+cameraMatrix: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 8.2322484623389789e+02, 0., 6.5199360623872849e+02, 0.,
+       8.2322484623389789e+02, 5.0598339959414085e+02, 0., 0., 1. ]
+rvecM1: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 2.439345783404379e-02, 8.943261827107734e-01, 4.467500846478651e-01, 9.92319262905849e-01,
+       3.255049558874668e-02, -1.193438130064516e-01, -1.212742333758108e-01, 4.462299229712222e-01, -8.866630792833353e-01 ]
+tvec1: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ -3.017743808303063e+04, 7.905054684715167e+03,
+       2.030233513756159e+05 ]
+ 
+# 0
+marker_0: 0
+ip_0: "192.168.8.130"
+port_0: 10000
+slope_p_0: -0.5
+slope_i_0: -0.8
+slope_d_0: 0.2
+speed_p_0: 100
+speed_i_0: 0.8
+speed_d_0: 0.1
+target_slope_0: 180
+target_speed_0: 100
+
+# 1
+marker_1: 1
+ip_1: "192.168.8.114"
+port_1: 10000
+slope_p_1: 0.8
+slope_i_1: 0.3
+slope_d_1: -0.6
+speed_p_1: 100
+speed_i_1: 1
+speed_d_1: 0
+target_slope_1: 90
+target_speed_1: 50
+
+# 2
+marker_2: 2
+ip_2: "192.168.8.114"
+port_2: 10000
+slope_p_2: -0.5
+slope_i_2: 0.8
+slope_d_2: 0.2
+speed_p_2: 100
+speed_i_2: 0
+speed_d_2: 0
+target_slope_2: 0.0
+target_speed_2: 100.0
+
+# 3
+marker_3: 3
+ip_3: "192.168.8.132"
+port_3: 10000
+slope_p_3: -0.5   
+slope_i_3: -0.8
+slope_d_3: 0.2
+speed_p_3: 100
+speed_i_3: 0
+speed_d_3: 0
+target_slope_3: 180.0 
+target_speed_3: 100.0
+
+# 4
+marker_4: 4
+ip_4: "192.168.8.119"
+port_4: 10000
+slope_p_4: 0.7
+slope_i_4: -0.7
+slope_d_4: 0.2
+speed_p_4: 100
+speed_i_4: -10
+speed_d_4: 0
+target_slope_4: 0
+target_speed_4: 0
+
+# 5
+marker_5: 5
+ip_5: "192.168.8.120"
+port_5: 10000
+slope_p_5: -0.5
+slope_i_5: -0.8
+slope_d_5: 0.2
+speed_p_5: 0.0
+speed_i_5: 0
+speed_d_5: 0
+target_slope_5: 180.0
+target_speed_5: 100.0
+
+# 6
+marker_6: 6
+ip_6: "192.168.8.137"
+port_6: 10000
+slope_p_6: -0.5
+slope_i_6: -0.8
+slope_d_6: 0.2
+speed_p_6: 100.0
+speed_i_6: 0
+speed_d_6: 0
+target_slope_6: 180.0
+target_speed_6: 100.0
+
+# 7
+marker_7: 7
+ip_7: "192.168.8.116"
+port_7: 10000
+slope_p_7: 2.0
+slope_i_7: -0.9
+slope_d_7: 0.5
+speed_p_7: 0
+speed_i_7: 0
+speed_d_7: 0
+target_slope_7: 90.0
+target_speed_7: 0
+
+
+
+
+
+# 8
+marker_8: 8
+ip_8: "192.168.8.110"
+port_8: 10000
+slope_p_8: 0.5
+slope_i_8: -0.8
+slope_d_8: 0.2
+speed_p_8: 0
+speed_i_8: 0
+speed_d_8: 0
+target_slope_8: 0.0
+target_speed_8: 0.0
+
+
+
+
+# 9
+marker_9: 9
+ip_9: "192.168.8.110"
+port_9: 10000
+slope_p_9: 2
+slope_i_9: -0.8
+slope_d_9: 0.4
+speed_p_9: 100.0
+speed_i_9: 0
+speed_d_9: 0
+target_slope_9: 0.0
+target_speed_9: 0.0
