@@ -89,7 +89,6 @@ void ConfigParamtersRead()
         front_str = "target_speed_";
         combined_str = front_str + to_string(i);
         fs[combined_str] >> target_speed_;
-
         for (auto iter = car_set.begin(); 
                 iter != car_set.end();)
         {
@@ -209,7 +208,6 @@ int main()
             lastTime) / (double)CLOCKS_PER_SEC;
         cout << "time" << consumeTime << "ms" << endl;
         cout << "fps: " << 1000 / consumeTime << "Hz" << endl;
-        
 
         // output car attribution
         for (auto iter = car_set.begin(); iter != car_set.end();)

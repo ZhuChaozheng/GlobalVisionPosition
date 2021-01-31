@@ -1,7 +1,7 @@
 #include "pid.h"
 
+
 float pid::get_slope_pid(float error, Car &car, float scalar){
-    
     //Get now time
     struct timeval tv;
     gettimeofday( &tv, NULL );
@@ -11,6 +11,7 @@ float pid::get_slope_pid(float error, Car &car, float scalar){
 //            _flag=1;
 //           _last_tim=tnow;
 //           }
+
     time_t _last_tim = car.get_last_tim();
     int dt = tnow - _last_tim; // on ms
     float output = 0;
@@ -29,8 +30,8 @@ float pid::get_slope_pid(float error, Car &car, float scalar){
     float delta_time = dt / 1000.0; // on s
     output += error * slope_p;
     _last_derivative = car.get_last_derivative();
-    float _last_error = car.get_last_error();
-    
+    float _last_error = car.get_last_error();  
+
     if ( abs(slope_d) > 0 && dt > 0 ) {
         float derivative = 0;
         if ( _last_derivative == 0 ){
@@ -160,6 +161,7 @@ void pid::controlSpeedAndAngular(Car &car)
     cout << "slope_p: " << slope_p << endl;
     cout << "slope_i: " << slope_i << endl;
     cout << "slope_d: " << slope_d << endl;
+
     // update parameter
     pid pid_turn;
     pid_turn.set_slope_pid(slope_p, slope_i, slope_d);
@@ -208,7 +210,6 @@ void pid::controlSpeedAndAngular(Car &car)
     float duty_left = -wp_angel/2 + wp_move; 
     duty_left *= -1;
     float duty_right = wp_angel/2 + wp_move;
-
     /*
 //防止输出越限，在左右输出减去相同的量。即保证转向角度控制，弱化速度控制。代码需测试 
 //    if(duty_left<-900.0)

@@ -124,10 +124,6 @@ speed_d_7: 0
 target_slope_7: 90.0
 target_speed_7: 0
 
-
-
-
-
 # 8
 marker_8: 8
 ip_8: "192.168.8.110"
@@ -140,9 +136,6 @@ speed_i_8: 0
 speed_d_8: 0
 target_slope_8: 0.0
 target_speed_8: 0.0
-
-
-
 
 # 9
 marker_9: 9

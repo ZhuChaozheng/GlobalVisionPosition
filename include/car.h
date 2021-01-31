@@ -81,6 +81,7 @@ public:
 	void set_speed_i(float I) { speed_i_ = I; }
 	void set_speed_d(float D) { speed_d_ = D; }
 	void set_ip(string ip) { ip_ = ip; }
+
 	void set_speed_error1(float error1) 
 			{ speed_error1_ = error1; }
 	void set_speed_error2(float error2) 
@@ -95,7 +96,6 @@ public:
 			{ last_derivative_ = last_derivative; }
     void set_last_tim(time_t last_tim) 
     		{ last_tim_ = last_tim; }
-
 
 	int get_marker() { return marker_; }
 	string get_ip() { return ip_; }
@@ -113,6 +113,7 @@ public:
 	float get_speed_p() { return speed_p_; }
 	float get_speed_i() { return speed_i_; }
 	float get_speed_d() { return speed_d_; }
+
 	float get_speed_error1() { return speed_error1_; }
 	float get_speed_error2() { return speed_error2_; }
 	float get_speed_output() { return speed_output_; }
