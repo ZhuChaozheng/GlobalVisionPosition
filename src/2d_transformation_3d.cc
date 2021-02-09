@@ -1,6 +1,6 @@
 #include "2d_transformation_3d.h"
 
-void pointToWorld(const Point& point, Point3f& worldPoint,
+void PointToWorld(const Point& point, Point3f& worldPoint,
                   const Mat& rvecM1, const Mat& tvec1,
                   const Mat& cameraMatrix, const double& s)
 {
@@ -10,6 +10,7 @@ void pointToWorld(const Point& point, Point3f& worldPoint,
     Mat imagePoint = Mat::ones(3, 1, cv::DataType<double>::type); //u,v,1
     imagePoint.at<double>(0, 0) = point.x;
     imagePoint.at<double>(1, 0) = point.y; 
+    // cameraMatrix 3*3
     Mat wcPoint = rvecM1.inv() * (cameraMatrix.inv() * s * imagePoint - tvec1);
     Point3f worldPoint1(wcPoint.at<double>(0, 0), wcPoint.at<double>(1, 0), wcPoint.at<double>(2, 0));
     worldPoint = worldPoint1 / 100;
@@ -17,13 +18,13 @@ void pointToWorld(const Point& point, Point3f& worldPoint,
 
 void ConfigFileRead(Mat rvecM1, Mat tvec1, Mat cameraMatrix, double s)
 {
-    FileStorage fs("../config/configure.yaml", FileStorage::READ);
+    FileStorage fs("../config/camera_intrinsic.yaml", FileStorage::READ);
     
     fs["rvecM1"] >> rvecM1;
     fs["tvec1"] >> tvec1;
     fs["cameraMatrix"] >> cameraMatrix;
     fs["s"] >> s;
-    // cout << "s" << s;
+    cout << "file s: " << s;
     fs.release();
     cout << "File Read Finished!" << endl;
 }

@@ -1,6 +1,6 @@
 #include "image_process.h"
 
-Point2f getAveragePoint(vector<Point2f>& pointSet)
+Point2f GetAveragePoint(vector<Point2f>& pointSet)
 {
 	Point2f averagePoint;
 	double sumX;
@@ -20,7 +20,7 @@ Point2f getAveragePoint(vector<Point2f>& pointSet)
 	return averagePoint;
 }
 
-void rotatedRectROI(const Mat& src, Mat& cropped, 
+void RotatedRectROI(const Mat& src, Mat& cropped, 
 		RotatedRect rect)
 {
 	// get angle and size from the bounding box
@@ -41,7 +41,7 @@ void rotatedRectROI(const Mat& src, Mat& cropped,
             cropped);
 }
 
-void thresh_callback(const Mat &src_gray, 
+void ThreshCallBack(const Mat &src_gray, 
 	vector<Point2f> &pointSet)
 {
 	Mat thresh_output;
@@ -66,6 +66,7 @@ void thresh_callback(const Mat &src_gray,
         float w = rotatedRect.size.width;
 
         float h = rotatedRect.size.height;
+        
         float areaRect = w * h;
         float rate = w / h;
 
@@ -76,12 +77,11 @@ void thresh_callback(const Mat &src_gray,
         	// barriers
         	drawContours(barriers_image, contours, static_cast<int>(t), 
 	                Scalar(255, 0, 255), 2, 8);  
-      //   	namedWindow( "barriers_image", 1 );
-    		// imshow("barriers_image", barriers_image);
+        	namedWindow( "barriers_image", 1 );
+    		imshow("barriers_image", barriers_image);
         }
-        else if (perimeter > 130)
-        // if (perimeter < 130 | perimeter > 230 | rate < 0.85)
-        // 	continue;
+        else if (perimeter > 130 & perimeter < 230 & rate > 0.85 
+        		& rate < 1.5)
         {
         	Point2f currentPoint = rotatedRect.center;
 	        // TODO
@@ -112,7 +112,7 @@ void thresh_callback(const Mat &src_gray,
 	        		iter != double_dup_rectangle_set.end();)
 	        {
 	        	Point2f tempPoint = (*iter).center;	        	
-	        	if (!neighbourPoint(tempPoint, currentPoint))
+	        	if (!NeighbourPoint(tempPoint, currentPoint))
 				{
 					flag = true;
 				}
@@ -138,29 +138,33 @@ void thresh_callback(const Mat &src_gray,
     int i = 0;
     for (size_t t = 0; t < next_notice_contours.size(); t++) 
     {
-        double area = contourArea(next_notice_contours[t]);
+    	double area = contourArea(next_notice_contours[t]);
+
         RotatedRect rotated_rect = minAreaRect(next_notice_contours[t]);
         // // geometry analysis
-        if (area > 2 & area < 40) 
+        if (area < 40) 
         {
+        	  circle(cimage, rotated_rect.center, cvRound(radius), 
+						Scalar(255, 0, 0), 2, LINE_AA);
         	for (auto iter = dup_rectangle_set.begin();
 		    			iter != dup_rectangle_set.end();)
 		    {
 		    	// iter is RotatedRect class
 		    	// display the position of big square
-		    	if (IsPointInRotatedRect((*iter), 
+		    	if (IsPointInRotatedRect((*iter),
 		    				rotated_rect.center))
 		        {
+		        	// cout << rotated_rect.center << endl;
 		        	// rotated_rect is small square
 		        	pointSet.push_back(rotated_rect.center);
 		        	circle(cimage, rotated_rect.center, cvRound(radius), 
-						Scalar(255, 0, 0), 2, LINE_AA);
+						Scalar(255, 0, 0), 1, LINE_AA); // blue
 		        }
-		    	iter ++;
+		    	iter ++;		    
 		    }
     	}
     }
-    namedWindow( "thresh_output", 0 );
+   namedWindow( "thresh_output", 0 );
     imshow("thresh_output", cimage);
     waitKey(5);
     // cout << "size(): " << pointSet.size() << endl;
@@ -180,7 +184,7 @@ bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p)
     for( int i = 0; i < 4; i++ )
     {
     	line(cimage, vtx[i], vtx[(i+1)%4], 
-        		Scalar(0, 255, 0), 1, LINE_AA);
+        		Scalar(0, 255, 0), 1, LINE_AA); // green
     }
 	return (GetCross(vtx[0], vtx[1], p) * 
 			GetCross(vtx[2], vtx[3], p) >= 0 )
@@ -193,7 +197,7 @@ bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p)
  * return num of equal pixelValue in vector Pointset and 
  * averagePoint
  */
-int countNum(int pixelValue, vector<PointAttri> pointSet)
+int CountNum(int pixelValue, vector<PointAttri> pointSet)
 {
 	int num = 0;
 	for (auto pointAttri = pointSet.begin(); pointAttri != pointSet.end();)
@@ -218,7 +222,7 @@ int countNum(int pixelValue, vector<PointAttri> pointSet)
 }
 
 
-void deletePointAttriValue(int pixelValue, vector<PointAttri>* pointSet)
+void DeletePointAttriValue(int pixelValue, vector<PointAttri>* pointSet)
 {
 	for (auto pointAttri = (*pointSet).begin(); pointAttri != (*pointSet).end();)
 	{
@@ -234,7 +238,7 @@ void deletePointAttriValue(int pixelValue, vector<PointAttri>* pointSet)
 }
 
 // return w((x_1 - x_2)^2 + (y_1 - y_2)^2)^(1/2)
-double getPixelDistance(Point2f pointA, Point2f pointB)
+double GetPixelDistance(Point2f pointA, Point2f pointB)
 {
     return sqrt((pointA.x - pointB.x) * (pointA.x - pointB.x) 
     	+ (pointA.y - pointB.y) * (pointA.y - pointB.y));
@@ -247,7 +251,7 @@ double getPixelDistance(Point2f pointA, Point2f pointB)
  * based on the distance among blocks, 35 is the max distance of car
  *
  */
-void classificationCar(vector<Point2f> *pointSet, 
+void ClassificationCar(vector<Point2f> *pointSet, 
 		vector<Car> &car_set)
 {	
 	// if you remount the camera, may be this parameter should be tuned
@@ -268,7 +272,7 @@ void classificationCar(vector<Point2f> *pointSet,
 
 		Point2f tempPoint = *point;
 		// cout << tempPoint << endl;
-		double distance = getPixelDistance(firstPoint, tempPoint);	
+		double distance = GetPixelDistance(firstPoint, tempPoint);
 		// cout << distance << endl;
 		if (distance < ridus) 
 		{
@@ -283,7 +287,7 @@ void classificationCar(vector<Point2f> *pointSet,
 	}
 	// cout << "classificationCar: " << point_set.size() << endl;
 	int marker = point_set.size() - 3;
-	
+	cout << marker << endl;
 	if (marker >= 0)
 	{
 		// search 
@@ -306,12 +310,12 @@ void classificationCar(vector<Point2f> *pointSet,
 	}
 }
 
-int findKeyPoint(Point2f& point, Point2f& tempPoint, vector<Point2f>& pointSet)
+int FindKeyPoint(Point2f& point, Point2f& tempPoint, vector<Point2f>& pointSet)
 {	
 	for (auto iter = pointSet.begin(); iter != pointSet.end();)
 	{
 		tempPoint = *iter;
-		double distance = getPixelDistance(point, tempPoint);
+		double distance = GetPixelDistance(point, tempPoint);
 		
 		if (distance < MAX_DISTANCE & distance > MIN_DISTANCE)
 			return 0;
@@ -322,15 +326,23 @@ int findKeyPoint(Point2f& point, Point2f& tempPoint, vector<Point2f>& pointSet)
 }
 
 // return absolute orientation
-// getSlope(center, vertex);
-double getSlope(Point2f first, Point2f second)
+// GetSlope(center, vertex);
+double GetSlope(Point2f first, Point2f second)
 {
-	// cout << first << endl;
-	// cout << second << endl;
+	float y = float(first.y - second.y);
+	float x = float(second.x - first.x);
+	double slope = atan2(y, x) * 180 / PI;
+	// 0~360
+	if (slope < 0)
+		slope = 360 + slope;
+  	return slope;
+}
+
+double Get3dSlope(Point3f first, Point3f second)
+{
 	// double param = double(second.x - first.x) / double(first.y - second.y);	
 	float y = float(first.y - second.y);
 	float x = float(second.x - first.x);
-	// cout << "getSlope " << float(y/x) << endl;	
 	// distinguish atan & atan2
 	double slope = atan2(y, x) * 180 / PI;
 	// 0~360
@@ -339,23 +351,8 @@ double getSlope(Point2f first, Point2f second)
   	return slope;
 }
 
-double get3dSlope(Point3f first, Point3f second)
-{
-	// double param = double(second.x - first.x) / double(first.y - second.y);	
-	float y = float(first.y - second.y);
-	float x = float(second.x - first.x);
-	// cout << y << endl;
-	// cout << x << endl;
-	// cout << "getSlope " << float(y/x) << endl;
-	// distinguish atan & atan2
-	double slope = atan2(y, x) * 180 / PI;
-	// 0~360
-	if (slope < 0)
-		slope = 360 + slope;
-  	return slope;
-}
-
-Point2f getmedianPoint(Point2f first, Point2f second)
+// return the median point between two points
+Point2f GetmedianPoint(Point2f first, Point2f second)
 {
 	Point2f point;
 	point.x = (first.x + second.x ) / 2;
@@ -363,13 +360,24 @@ Point2f getmedianPoint(Point2f first, Point2f second)
 	return point;
 }
 
-void getCarKeyAttribution(Car& car)
+void GetCarKeyAttribution(Car& car)
 {
 	vector<Point2f> pointSet = car.get_point_set();	
 	if (pointSet.size() != 0)
 	{
-		double slope = getAbsoluteOrientation(pointSet, car); // stuff a triangle
-		car.set_slope(slope);
+		double slope = GetAbsoluteOrientation(pointSet, car); // stuff a triangle
+		double lastSlope = car.get_slope();
+		cout << "lastSlope: " << lastSlope << endl;
+		// limit the expectional error from recognition
+		if (init_slope_flag)
+		{
+			car.set_slope(slope);
+			return;
+		}
+		if(abs(slope - lastSlope) > 50)
+			car.set_slope(lastSlope);
+		else
+			car.set_slope(slope);
 	}	
 }
 
@@ -378,7 +386,7 @@ void getCarKeyAttribution(Car& car)
  * maximum distance of two vertex
  *
  */
-EdgeNode findMaxDistance(const vector<Point2f>& pointSet, 
+EdgeNode FindMaxDistance(const vector<Point2f>& pointSet, 
 		double maxDistance)
 {
 	double tempDistance = 0;
@@ -392,7 +400,7 @@ EdgeNode findMaxDistance(const vector<Point2f>& pointSet,
 		{
 
 			Point2f tempPoint = *iterTemp;
-			double distance = getPixelDistance(
+			double distance = GetPixelDistance(
 					currentPoint, tempPoint);
 			if ((tempDistance < distance) & 
 					(distance != maxDistance)) 
@@ -420,15 +428,15 @@ EdgeNode findMaxDistance(const vector<Point2f>& pointSet,
  * then determine vertex of triangle
  *
  */
-void determineTriangleVertex(vector<Point2f>& pointSet, Car& car)
+void DetermineTriangleVertex(vector<Point2f>& pointSet, Car& car)
 {
 	// search max distance between points, 
 	// equals to one isosceles
-	EdgeNode edgeNode = findMaxDistance(pointSet, 0);
+	EdgeNode edgeNode = FindMaxDistance(pointSet, 0);
 	double maxDistance = edgeNode.Weight;
 	// search second max distance between points,
 	// equals to another isosceles
-	EdgeNode edgeNodeAnother = findMaxDistance(pointSet, 
+	EdgeNode edgeNodeAnother = FindMaxDistance(pointSet, 
 			maxDistance);
 	/*
 	 * if the side edge is the longest, then
@@ -472,12 +480,12 @@ void determineTriangleVertex(vector<Point2f>& pointSet, Car& car)
  * 
  *
  */
-double getAbsoluteOrientation(vector<Point2f>& pointSet,
+double GetAbsoluteOrientation(vector<Point2f>& pointSet,
 		Car& car)
 {
 	if (pointSet.size() == 0)
 		return 0;
-	determineTriangleVertex(pointSet, car);
+	DetermineTriangleVertex(pointSet, car);
     // Find the minimum area enclosing circle
     Point2f center;
     float radius = 0;
@@ -485,21 +493,21 @@ double getAbsoluteOrientation(vector<Point2f>& pointSet,
     car.set_median_point(center);
     Point2f medianPoint = car.get_median_point();
     Point2f first = car.get_first();
-    return getSlope(medianPoint, first);
+    return GetSlope(medianPoint, first);
 }
 
 // from distance to judge the neigbhouring points
-bool neighbourPoint(Point2f pointA, Point2f pointB)
+bool NeighbourPoint(Point2f pointA, Point2f pointB)
 {
 	bool flag = true;
-	double distance = getPixelDistance(pointA, pointB);
+	double distance = GetPixelDistance(pointA, pointB);
 	if (distance < 4)
 		return flag;
 	flag = false;
 	return flag;
 }
 
-bool cmp(const Point2f a, const Point2f b){
+bool Cmp(const Point2f a, const Point2f b){
 	if (a.x > b.x)
 		return 0;
 	if (a.y > b.y)
@@ -513,7 +521,7 @@ bool cmp(const Point2f a, const Point2f b){
  * output data: Car lastCar
  *
  */
-bool exist(Car& car, vector<Car>& carStateSet, Car& lastCar)
+bool Exist(Car& car, vector<Car>& carStateSet, Car& lastCar)
 {
 	for(auto iter = carStateSet.begin(); 
 		iter != carStateSet.end();)
@@ -529,7 +537,7 @@ bool exist(Car& car, vector<Car>& carStateSet, Car& lastCar)
 	return false;
 }
 
-void deleteCar(Car& car, vector<Car>& carStateSet)
+void DeleteCar(Car& car, vector<Car>& carStateSet)
 {
     for(auto iter = carStateSet.begin(); 
             iter != carStateSet.end();)

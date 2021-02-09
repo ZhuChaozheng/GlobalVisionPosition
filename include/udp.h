@@ -25,9 +25,7 @@ public:
             const char* send_buf);
 
 private:     
-    /* socket文件描述符 */
-    int sock_fd;
-    struct sockaddr_in addr_serv;
-    int len;
+    struct sockaddr_in addr_serv_;
+    int len_;
 };
 #endif

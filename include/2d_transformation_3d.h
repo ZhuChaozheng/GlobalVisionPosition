@@ -13,7 +13,7 @@ Mat tvec1 = Mat::eye(3, 1,
 double s = 203067;
 
 
-void pointToWorld(const Point& point, Point3f& worldPoint,
+void PointToWorld(const Point& point, Point3f& worldPoint,
                   const Mat& rvecM1, const Mat& tvec1,
                   const Mat& cameraMatrix, const double& s);
 void ConfigFileRead(Mat rvecM1, Mat tvec1, Mat cameraMatrix, double s);

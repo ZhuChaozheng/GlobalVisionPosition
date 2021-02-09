@@ -67,34 +67,35 @@ bool less_second(const point & m1, const point & m2) {
 
 int thresh = 30; // gray
 // int thresh = 255; // colour
+bool init_slope_flag = true;
 RNG rng(12345);
 Mat src_gray;
 Mat cimage;
 
-bool cmp(const Point2f a, const Point2f b);
-void thresh_callback(const Mat &src_gray, 
+bool Cmp(const Point2f a, const Point2f b);
+void ThreshCallBack(const Mat &src_gray, 
 		vector<Point2f> &pointSet);
 float GetCross(Point2f &p1, Point2f &p2, Point2f &p);
 bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p);
 // bool PointNeighbourVector(const Point2f currentPoint, 
 // 		vector<Point2f>	double_dup_point_set);
-bool exist(Car& car, vector<Car>& carStateSet, Car& lastCar);
-bool neighbourPoint(Point2f pointA, Point2f pointB);
-void classificationCar(vector<Point2f> *pointSet, 
+bool Exist(Car& car, vector<Car>& carStateSet, Car& lastCar);
+bool NeighbourPoint(Point2f pointA, Point2f pointB);
+void ClassificationCar(vector<Point2f> *pointSet, 
 		vector<Car> &carSet);
-double getPixelDistance(Point2f pointA, Point2f pointB);
-void getCarKeyAttribution(Car& car);
-int findKeyPoint(Point2f& point, Point2f& tempPoint, 
+double GetPixelDistance(Point2f pointA, Point2f pointB);
+void GetCarKeyAttribution(Car& car);
+int FindKeyPoint(Point2f& point, Point2f& tempPoint, 
 		vector<Point2f>& pointSet);
 
-void determineTriangleVertex(vector<Point2f>& 
+void DetermineTriangleVertex(vector<Point2f>& 
 		pointSet, Car& car);
-double getAbsoluteOrientation(vector<Point2f>& 
+double GetAbsoluteOrientation(vector<Point2f>& 
 		pointSet, Car& car);
-double getSlope(Point2f first, Point2f second);
+double GetSlope(Point2f first, Point2f second);
 
-double get3dSlope(Point3f first, Point3f second);
+double Get3dSlope(Point3f first, Point3f second);
 
-void deleteCar(Car& car, vector<Car>& carStateSet);
+void DeleteCar(Car& car, vector<Car>& carStateSet);
 
 #endif //IMAGE_PROCESS_H

@@ -24,11 +24,12 @@ class Car
 {
 public:
 	int marker_; // marker
-	Point2f medianPoint_; // medianPoint
+	// medianPoint is the center point of circumcircle
+	Point2f medianPoint_; 
 	Point2f first_; // vertex
 	Point2f second_; // one point of bottom line
 	Point2f third_; // the other point of bottom line
-	double slope_; // slope
+	double slope_ = 0; // slope
 	float speed_; // accumulated x y
 	double angularVelocity_;// angular velocity, yaw
 	vector<Point2f> pointSet; 
@@ -51,6 +52,10 @@ public:
     float integrator_;
     float last_derivative_;
     time_t last_tim_;
+    float last_speed_error_;
+    float speed_integrator_;
+    float last_speed_derivative_;
+    time_t last_speed_tim_;
 
 public:
 	Car(int marker, float slope_P, float slope_I, 
@@ -62,6 +67,8 @@ public:
 	void update_parameters(float slope_P, float slope_I, 
 			float slope_D, float speed_P, float speed_I, 
 			float speed_D, string ip, double target_slope,
+			float target_speed);
+	void update_parameters_slope_speed(double target_slope,
 			float target_speed);
 
 	void set_median_point(Point2f center) { medianPoint_ = center; }
@@ -96,11 +103,21 @@ public:
 			{ last_derivative_ = last_derivative; }
     void set_last_tim(time_t last_tim) 
     		{ last_tim_ = last_tim; }
+    void set_last_speed_error(float last_error) 
+			{ last_speed_error_ = last_error; }
+	void set_speed_integrator(float integrator) 
+			{ speed_integrator_ = integrator; }
+	void set_last_speed_derivative(float last_derivative) 
+			{ last_speed_derivative_ = last_derivative; }
+    void set_last_speed_tim(time_t last_tim) 
+    		{ last_speed_tim_ = last_tim; }
 
 	int get_marker() { return marker_; }
 	string get_ip() { return ip_; }
 	Point2f get_median_point() { return medianPoint_; }
 	Point2f get_first() { return first_; }
+	Point2f get_second() { return second_; }
+	Point2f get_third() { return third_; }
 	double get_slope() { return slope_; }
 	float get_speed() { return speed_; }
 	vector<Point2f> get_point_set() { return pointSet; } 
@@ -121,6 +138,10 @@ public:
 	float get_integrator() { return integrator_; }
 	float get_last_derivative() { return last_derivative_; }
     time_t get_last_tim() { return last_tim_; }
+    float get_last_speed_error() { return last_speed_error_; }
+	float get_speed_integrator() { return speed_integrator_; }
+	float get_last_speed_derivative() { return last_speed_derivative_; }
+    time_t get_last_speed_tim() { return last_speed_tim_; }
 };
 
 #endif //CAR_H
