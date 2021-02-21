@@ -392,6 +392,8 @@ int main()
     // }
     udp udp_server;
     udp_server.udp_server_init();
+
+    hardware_control_interface(cars_control_set);
     // TimerTrajectory(RECTANGLE, 5);
     // ***** dynamicly tune parameter thread ********
     // intialize timer thread

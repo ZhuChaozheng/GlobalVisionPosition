@@ -36,7 +36,7 @@ int udp::send_data(const int sock_fd,
     return 1;  
 }
 
-void char2float(char *src, float *target)
+void char2float(char &src, vector<float> &float_set)
 {
     for(int i = 0; i < 200; i = i + 4)
     {
@@ -46,7 +46,8 @@ void char2float(char *src, float *target)
         temp[2] = src[i + 2];
         temp[3] = src[i + 3];
 
-        target = (float*)(&temp);
+        float *target = (float*)(&temp);
+        float_set.push_back(*target);
         cout <<"target " << *target << endl;
         cout << "i " << i << endl;
     }
@@ -71,7 +72,9 @@ void udp::handle_udp_msg(int fd)
             return;
         }
         float *w;
-        char2float(buf, w);
+        vector<float> float_set;
+        char2float(buf, float_set);
+        cout << float_set.size() << endl;
         cout << "print in udp handle" << endl;
         // printf("client:%s\n",buf);  
         // memset(buf, 0, BUFF_LEN);
