@@ -1,5 +1,12 @@
 #include "control_interface.h"
 
+void* say_hello(void* args)
+{
+    udp udp_server;
+    udp_server.udp_server_init();
+    return 0;
+}
+
 int main()
 {	
 	/*
@@ -22,6 +29,7 @@ int main()
 	for(int i = 0; i <= 9; i ++)
 		cars_control_set.push_back(car);
 	cout << cars_control_set.size() << endl;
+	
 	interface_udp(cars_control_set);
 	// vector<float> float_set;
 	// float_set.push_back(target_point.x);

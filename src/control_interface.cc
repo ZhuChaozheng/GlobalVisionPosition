@@ -31,7 +31,7 @@ void StopCars()
         udp udp_comm;
         int sock_fd = udp_comm.udp_init(ip);
         // send data through udp
-        udp_comm.send_data(sock_fd, a);
+        udp_comm.send_data(sock_fd, a, sizeof(a));
         cout << marker << " stopped!" << endl;
         iter ++;
     }
@@ -218,7 +218,7 @@ void StopCar(Car &car)
     udp udp_comm;
     int sock_fd = udp_comm.udp_init(ip);
     // send data through udp
-    udp_comm.send_data(sock_fd, a);
+    udp_comm.send_data(sock_fd, a, sizeof(a));
     int marker = car.get_marker();
     cout << marker << " stopped!" << endl;
 }
@@ -297,15 +297,10 @@ void interface_udp(vector<Car> &cars_control_set)
         i = i + 4;
         iter ++;
     }
-    float *w;
-    char2float(src, w);
-
-    // 1 130.22, 139.22, 30.1, 52.2, 0
-    // 2 130.22, 139.22, 30.1, 52.2, 0
-    // udp udp_comm;
-    // int sock_fd = udp_comm.udp_init(127.0.0.1);
-    // // send data through udp
-    // udp_comm.send_data(sock_fd, a);
+    udp udp_comm;
+    int sock_fd = udp_comm.udp_init("127.0.0.1");
+    // send data through udp
+    udp_comm.send_data(sock_fd, src, sizeof(src));
 }
 /*
  *
@@ -380,252 +375,267 @@ void NavigateTargetPoint(Car &car)
         return;
     }
 }
+void* say_hello(void* args)
+{
+    udp udp_server;
+    udp_server.udp_server_init();
+    return 0;
+}
 
 int main()
 {
+    // pthread_t tids[1];
+    // int ret = pthread_create(&tids[0], NULL, say_hello, NULL);
+    // if (ret != 0)
+    // {
+    //    cout << "pthread_create error: error_code=" << ret << endl;
+    // }
+    udp udp_server;
+    udp_server.udp_server_init();
     // TimerTrajectory(RECTANGLE, 5);
     // ***** dynamicly tune parameter thread ********
     // intialize timer thread
-    Timer timer;
-    float target_slope_=0;
-    float time_=0;
-    // // execute task every 2000 microsecond
-    // timer.start(2000, std::bind(ConfigParamtersRead));
-    ConfigParamtersRead();
-    // *********** main thread ******************
-    // register signal ctrl+c
-    signal(SIGINT, sigint_handler);
-    // clock_t lastTime = clock();
-    struct timeval lastTime, currentTime;
-    float consumeTime;
-    gettimeofday(&lastTime,NULL);
-    vector<Car> carStateSet;
-    init();
-    
-    // Initialize Data
-    // define the angle range of 0-360
-    vector<float> sine_angle;
-    for( int t = 0; t < 100; t++ ){
-        sine_angle.push_back( (rand() % 360));
-    }
-    // Create Ploter
-    cv::Mat data_angle( sine_angle );
-    Ptr<cv::plot::Plot2d> plot_angle = 
-            cv::plot::Plot2d::create( data_angle );
-
-    // define the speed range of 0-100
-    vector<float> sine_speed;
-    for( int t = 0; t < 100; t++ ){
-        sine_speed.push_back( (rand() % 300));
-    }
-    // Create Ploter
-    cv::Mat data_speed( sine_speed );
-    Ptr<cv::plot::Plot2d> plot_speed = 
-            cv::plot::Plot2d::create( data_speed );
-
-    // define the manhattan distance range of 0-100
-    vector<float> sine_manhattan_distance;
-    for( int t = 0; t < 100; t++ ){
-        sine_manhattan_distance.push_back( (rand() % 300));
-    }
-    // Create Ploter
-    cv::Mat data_manhattan_distance( sine_manhattan_distance );
-    Ptr<cv::plot::Plot2d> plot_manhattan_distance = 
-            cv::plot::Plot2d::create( data_manhattan_distance );
-    
-    // init parameter of pid
+    // Timer timer;
+    // float target_slope_=0;
+    // float time_=0;
+    // // // execute task every 2000 microsecond
+    // // timer.start(2000, std::bind(ConfigParamtersRead));
     // ConfigParamtersRead();
-    // return 0;
-    // Kalman
-    Kalman myFilterSpeed = Kalman(0.125,32,1023,0);
-    float filtered_speed; 
-    float accelatespeed =0;
-    Mat src;
-    Mat src_thresh;
-    float sum_time;
-    /*
-     * Car:
-     *     Point2f target_point, 
-     *     float target_speed, 
-     *     float target_slope, 
-     *     int stop_flag
-     */
-    Point2f target_point = Point2f(0, 0);
-    float target_speed = 0;
-    float target_slope = 47;
-    int stop_flag = 0;
-    Car car;
-    car.set_target_point(target_point);
-    car.set_target_speed(target_speed);
-    car.set_target_slope(target_slope);
-    car.set_stop_flag(stop_flag);
-    vector<Car> cars_control_set;
-    for(int i = 0; i <= 9; i ++)
-        cars_control_set.push_back(car);
-    cout << cars_control_set.size() << endl;
-    hardware_control_interface(cars_control_set);
-    while (1) 
-    {
+    // // *********** main thread ******************
+    // // register signal ctrl+c
+    // signal(SIGINT, sigint_handler);
+    // // clock_t lastTime = clock();
+    // struct timeval lastTime, currentTime;
+    // float consumeTime;
+    // gettimeofday(&lastTime,NULL);
+    // vector<Car> carStateSet;
+    // init();
+    
+    // // Initialize Data
+    // // define the angle range of 0-360
+    // // vector<float> sine_angle;
+    // // for( int t = 0; t < 100; t++ ){
+    // //     sine_angle.push_back( (rand() % 360));
+    // // }
+    // // // Create Ploter
+    // // cv::Mat data_angle( sine_angle );
+    // // Ptr<cv::plot::Plot2d> plot_angle = 
+    // //         cv::plot::Plot2d::create( data_angle );
+
+    // // // define the speed range of 0-100
+    // // vector<float> sine_speed;
+    // // for( int t = 0; t < 100; t++ ){
+    // //     sine_speed.push_back( (rand() % 300));
+    // // }
+    // // // Create Ploter
+    // // cv::Mat data_speed( sine_speed );
+    // // Ptr<cv::plot::Plot2d> plot_speed = 
+    // //         cv::plot::Plot2d::create( data_speed );
+
+    // // // define the manhattan distance range of 0-100
+    // // vector<float> sine_manhattan_distance;
+    // // for( int t = 0; t < 100; t++ ){
+    // //     sine_manhattan_distance.push_back( (rand() % 300));
+    // // }
+    // // // Create Ploter
+    // // cv::Mat data_manhattan_distance( sine_manhattan_distance );
+    // // Ptr<cv::plot::Plot2d> plot_manhattan_distance = 
+    // //         cv::plot::Plot2d::create( data_manhattan_distance );
+    
+    // // init parameter of pid
+    // // ConfigParamtersRead();
+    // // return 0;
+    // // Kalman
+    // Kalman myFilterSpeed = Kalman(0.125,32,1023,0);
+    // float filtered_speed; 
+    // float accelatespeed =0;
+    // Mat src;
+    // Mat src_thresh;
+    // float sum_time;
+    // /*
+    //  * Car:
+    //  *     Point2f target_point, 
+    //  *     float target_speed, 
+    //  *     float target_slope, 
+    //  *     int stop_flag
+    //  */
+    // Point2f target_point = Point2f(0, 0);
+    // float target_speed = 0;
+    // float target_slope = 47;
+    // int stop_flag = 0;
+    // Car car;
+    // car.set_target_point(target_point);
+    // car.set_target_speed(target_speed);
+    // car.set_target_slope(target_slope);
+    // car.set_stop_flag(stop_flag);
+    // vector<Car> cars_control_set;
+    // for(int i = 0; i <= 9; i ++)
+    //     cars_control_set.push_back(car);
+    // cout << cars_control_set.size() << endl;
+    // hardware_control_interface(cars_control_set);
+    // while (1) 
+    // {
         
-        if (app_stopped) break;
-        StartGrabStream(src);
-        if (src.empty())
-        {
-            cout << "could not read the image." << endl;
-            return 0;
-        }
-        // TODO
-        // warpAffine
-        // Mat warp_rotate_dst;
-        // cout << cameraMatrix << endl;
-        // // warpAffine( src, warp_rotate_dst, cameraMatrix, src.size() );
-        // warpAffine(src, warp_rotate_dst, cameraMatrix, src.size(), INTER_CUBIC);
-        // imwrite("warp_dst.jpg", src);
-        // imwrite("warp_rotate_dst.jpg", warp_rotate_dst);
-        // return 0;
-        threshold(src, src_thresh, 80, 255, THRESH_BINARY);
-         // namedWindow( "src_thresh", 0 );
-         // imshow("src_thresh", src_thresh);
+    //     if (app_stopped) break;
+    //     StartGrabStream(src);
+    //     if (src.empty())
+    //     {
+    //         cout << "could not read the image." << endl;
+    //         return 0;
+    //     }
+    //     // TODO
+    //     // warpAffine
+    //     // Mat warp_rotate_dst;
+    //     // cout << cameraMatrix << endl;
+    //     // // warpAffine( src, warp_rotate_dst, cameraMatrix, src.size() );
+    //     // warpAffine(src, warp_rotate_dst, cameraMatrix, src.size(), INTER_CUBIC);
+    //     // imwrite("warp_dst.jpg", src);
+    //     // imwrite("warp_rotate_dst.jpg", warp_rotate_dst);
+    //     // return 0;
+    //     threshold(src, src_thresh, 80, 255, THRESH_BINARY);
+    //      // namedWindow( "src_thresh", 0 );
+    //      // imshow("src_thresh", src_thresh);
 
-        vector<Point2f> pointSet;
-        ThreshCallBack(src_thresh, pointSet);
-        float difference = 0;
-        int num = 0;
-        // loop all the point to classify them 
-        for(;;) 
-        {
-            if (pointSet.size() != 0)
-            {
-                ClassificationCar(&pointSet, 
-                      car_set); // carSet -> global variable
-            }
-            else
-               break;
-        }
-        // output car attribution
-        for (auto iter = car_set.begin(); iter != car_set.end();)
-        {            
-            GetCarKeyAttribution(*iter);
-            Point2f medianPoint = (*iter).get_median_point();
-            int marker = (*iter).get_marker();
-            float slope = (*iter).get_slope();
-            // Point3f targetPoint = (*iter).get_target();
+    //     vector<Point2f> pointSet;
+    //     ThreshCallBack(src_thresh, pointSet);
+    //     float difference = 0;
+    //     int num = 0;
+    //     // loop all the point to classify them 
+    //     for(;;) 
+    //     {
+    //         if (pointSet.size() != 0)
+    //         {
+    //             ClassificationCar(&pointSet, 
+    //                   car_set); // carSet -> global variable
+    //         }
+    //         else
+    //            break;
+    //     }
+    //     // output car attribution
+    //     for (auto iter = car_set.begin(); iter != car_set.end();)
+    //     {            
+    //         GetCarKeyAttribution(*iter);
+    //         Point2f medianPoint = (*iter).get_median_point();
+    //         int marker = (*iter).get_marker();
+    //         float slope = (*iter).get_slope();
+    //         // Point3f targetPoint = (*iter).get_target();
             
-            cout << "marker: " << marker << endl;
-            cout << "slope: " << slope << endl;
-            float filteredSlope = (*iter).filter_.getFilteredValue(slope);
-            // cout << "filteredSlope: " << filteredSlope << endl;
-            // plot curve
-            sine_angle.erase(sine_angle.begin());
-            sine_angle.push_back(slope);   
-            // Render Plot Image
-            //Mat image;
-            //plot_angle->render( image );
-            // Show Image
-            //imshow("curve_angle", image );
-            //waitKey(5);
-            float target_speed = (*iter).get_target_speed();
-            cout << "target_speed: " << target_speed << endl;
-            Point2f target_point = (*iter).get_target_point();
-            cout << "target_point: " << target_point << endl; 
-            float target_slope = (*iter).get_target_slope();
-            cout << "target_slope: " << target_slope << endl;
-            // plot standard curve
-            // sine_manhattan_distance.erase(sine_manhattan_distance.begin());
-            // sine_manhattan_distance.push_back(target_speed);        
-            // // Render Plot Image
-            // Mat image_manhattan_distance;
-            // plot_manhattan_distance->render( image_manhattan_distance );
-            // // Show Image
-            // imshow("curve_standard_speed", image_manhattan_distance ); 
-            cout << "medianPoint: " << medianPoint << endl;
-            // loaded from the first line
-            // Point3f worldPoint;
-            // PointToWorld(medianPoint, worldPoint, rvecM1, 
-            //              tvec1, cameraMatrix, s);
-            /****************** Navigation Step ***************************/
-            NavigateTargetPoint(*iter);
-            /************************* end Navigation *****************/
-            Car lastCar;
+    //         cout << "marker: " << marker << endl;
+    //         cout << "slope: " << slope << endl;
+    //         float filteredSlope = (*iter).filter_.getFilteredValue(slope);
+    //         // cout << "filteredSlope: " << filteredSlope << endl;
+    //         // plot curve
+    //         // sine_angle.erase(sine_angle.begin());
+    //         // sine_angle.push_back(slope);   
+    //         // Render Plot Image
+    //         //Mat image;
+    //         //plot_angle->render( image );
+    //         // Show Image
+    //         //imshow("curve_angle", image );
+    //         //waitKey(5);
+    //         float target_speed = (*iter).get_target_speed();
+    //         cout << "target_speed: " << target_speed << endl;
+    //         Point2f target_point = (*iter).get_target_point();
+    //         cout << "target_point: " << target_point << endl; 
+    //         float target_slope = (*iter).get_target_slope();
+    //         cout << "target_slope: " << target_slope << endl;
+    //         // plot standard curve
+    //         // sine_manhattan_distance.erase(sine_manhattan_distance.begin());
+    //         // sine_manhattan_distance.push_back(target_speed);        
+    //         // // Render Plot Image
+    //         // Mat image_manhattan_distance;
+    //         // plot_manhattan_distance->render( image_manhattan_distance );
+    //         // // Show Image
+    //         // imshow("curve_standard_speed", image_manhattan_distance ); 
+    //         cout << "medianPoint: " << medianPoint << endl;
+    //         // loaded from the first line
+    //         // Point3f worldPoint;
+    //         // PointToWorld(medianPoint, worldPoint, rvecM1, 
+    //         //              tvec1, cameraMatrix, s);
+    //         /****************** Navigation Step ***************************/
+    //         NavigateTargetPoint(*iter);
+    //         /************************* end Navigation *****************/
+    //         Car lastCar;
 
-            if (Exist((*iter), carStateSet, lastCar))
-            {
-                Point2f lastMedianPoint = lastCar.get_median_point();
-                cout << "lastMedianPoint: " << lastMedianPoint << endl;
-                float lastSlope = lastCar.get_slope();
-                float lastspeed = (*iter).get_speed();
-                // Point3f lastWorldPoint;
-                // loaded parameters from the first line
-                // PointToWorld(lastMedianPoint, lastWorldPoint, 
-                //         rvecM1, tvec1, cameraMatrix, s);  
+    //         if (Exist((*iter), carStateSet, lastCar))
+    //         {
+    //             Point2f lastMedianPoint = lastCar.get_median_point();
+    //             cout << "lastMedianPoint: " << lastMedianPoint << endl;
+    //             float lastSlope = lastCar.get_slope();
+    //             float lastspeed = (*iter).get_speed();
+    //             // Point3f lastWorldPoint;
+    //             // loaded parameters from the first line
+    //             // PointToWorld(lastMedianPoint, lastWorldPoint, 
+    //             //         rvecM1, tvec1, cameraMatrix, s);  
             
-                // Point3f speed_three_dim = (worldPoint -
-                //         lastWorldPoint) / consumeTime * 1000;
-                //cout << "speed_three_dim: " << speed_three_dim << endl;
-                // filter data from kalman
-                // add calculated value into Kalman when moving
-                // if (lastMedianPoint != medianPoint)
-                //    slope = getSlope(lastMedianPoint, medianPoint);
-                // filteredSlope = myFilter.getFilteredValue(slope);
-                float speed = sqrt(pow(medianPoint.x - 
-                    lastMedianPoint.x, 2) + pow(medianPoint.y - 
-                    lastMedianPoint.y, 2)) / consumeTime;
-                difference =speed-lastspeed;
-                //cout << "speed-lastspeed : " << difference  << "px/s" << endl;
-                // float speed = sqrt(pow(worldPoint.x - 
-                //     lastWorldPoint.x, 2) + pow(worldPoint.y - 
-                //     lastWorldPoint.y, 2)) / consumeTime * 1000;
-                //cout << "speed: " << speed  << "px/s" << endl;                
-                (*iter).set_speed(speed);
-                // filtered_speed = myFilterSpeed.getFilteredValue(speed);
-                // cout << "filtered_speed: " << filtered_speed << "px/s" << endl;
-                // plot curve
-                sine_speed.erase(sine_speed.begin());
-                sine_speed.push_back(filtered_speed);        
-                // Render Plot Image
-                // Mat image_speed;
-                // plot_speed->render( image_speed );
-                // // Show Image
-                // imshow("curve_speed", image_speed ); 
+    //             // Point3f speed_three_dim = (worldPoint -
+    //             //         lastWorldPoint) / consumeTime * 1000;
+    //             //cout << "speed_three_dim: " << speed_three_dim << endl;
+    //             // filter data from kalman
+    //             // add calculated value into Kalman when moving
+    //             // if (lastMedianPoint != medianPoint)
+    //             //    slope = getSlope(lastMedianPoint, medianPoint);
+    //             // filteredSlope = myFilter.getFilteredValue(slope);
+    //             float speed = sqrt(pow(medianPoint.x - 
+    //                 lastMedianPoint.x, 2) + pow(medianPoint.y - 
+    //                 lastMedianPoint.y, 2)) / consumeTime;
+    //             difference =speed-lastspeed;
+    //             //cout << "speed-lastspeed : " << difference  << "px/s" << endl;
+    //             // float speed = sqrt(pow(worldPoint.x - 
+    //             //     lastWorldPoint.x, 2) + pow(worldPoint.y - 
+    //             //     lastWorldPoint.y, 2)) / consumeTime * 1000;
+    //             //cout << "speed: " << speed  << "px/s" << endl;                
+    //             (*iter).set_speed(speed);
+    //             // filtered_speed = myFilterSpeed.getFilteredValue(speed);
+    //             // cout << "filtered_speed: " << filtered_speed << "px/s" << endl;
+    //             // plot curve
+    //             // sine_speed.erase(sine_speed.begin());
+    //             // sine_speed.push_back(filtered_speed);        
+    //             // Render Plot Image
+    //             // Mat image_speed;
+    //             // plot_speed->render( image_speed );
+    //             // // Show Image
+    //             // imshow("curve_speed", image_speed ); 
                 
-                DeleteCar(*iter, carStateSet);
+    //             DeleteCar(*iter, carStateSet);
 
-                // TODO
-                /*
-                 * define the target_speed and target_angel
-                 * global variable of target_angel
-                 * note: target_angel derived from two 2d points,
-                 * you can also try to use 3d, but may it has 
-                 * subtle error.
-                 */
-                pid pid_control;
-                 pid_control.controlSpeedAndAngular(*iter);
-            }
-            carStateSet.push_back((*iter));
-            iter ++;
+    //             // TODO
+    //             /*
+    //              * define the target_speed and target_angel
+    //              * global variable of target_angel
+    //              * note: target_angel derived from two 2d points,
+    //              * you can also try to use 3d, but may it has 
+    //              * subtle error.
+    //              */
+    //             pid pid_control;
+    //             pid_control.controlSpeedAndAngular(*iter);
+    //         }
+    //         carStateSet.push_back((*iter));
+    //         iter ++;
           
-        }   
-        // consume time 
-        // clock_t currentTime = clock();
-        cout << "lastTime: " << lastTime.tv_usec << endl;
-        gettimeofday(&currentTime, NULL);
-        consumeTime = (currentTime.tv_sec - lastTime.tv_sec) + 
-                (float)(currentTime.tv_usec - lastTime.tv_usec) / 1000000.0;
-        cout << "time" << consumeTime << "s" << endl;
-        cout << "fps: " << 1 / consumeTime << "Hz" << endl;
-        time_+=consumeTime;
-        cout << "time_" << time_ << "s" << endl;
-        // if((accelatespeed<=difference/consumeTime) && difference>0 && difference/consumeTime<600)
-        //    {
-        //         accelatespeed=fabs(difference)/consumeTime;
-        //    } 
-        //  cout << " accelatespeed : " <<  accelatespeed  << "px/s^2" << endl;
-        // update the last state
-        lastTime = currentTime;
-        cout << "lastTime: " << lastTime.tv_usec << endl;
-    }
-    // send stop command to cars
-    StopCars();
+    //     }   
+    //     // consume time 
+    //     // clock_t currentTime = clock();
+    //     cout << "lastTime: " << lastTime.tv_usec << endl;
+    //     gettimeofday(&currentTime, NULL);
+    //     consumeTime = (currentTime.tv_sec - lastTime.tv_sec) + 
+    //             (float)(currentTime.tv_usec - lastTime.tv_usec) / 1000000.0;
+    //     cout << "time" << consumeTime << "s" << endl;
+    //     cout << "fps: " << 1 / consumeTime << "Hz" << endl;
+    //     time_+=consumeTime;
+    //     cout << "time_" << time_ << "s" << endl;
+    //     // if((accelatespeed<=difference/consumeTime) && difference>0 && difference/consumeTime<600)
+    //     //    {
+    //     //         accelatespeed=fabs(difference)/consumeTime;
+    //     //    } 
+    //     //  cout << " accelatespeed : " <<  accelatespeed  << "px/s^2" << endl;
+    //     // update the last state
+    //     lastTime = currentTime;
+    //     cout << "lastTime: " << lastTime.tv_usec << endl;
+    // }
+    // // send stop command to cars
+    // StopCars();
+
     return 0;
 
 }

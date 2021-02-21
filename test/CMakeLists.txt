@@ -24,8 +24,8 @@ target_link_libraries(GlobalVisionPositionLibrary ${THIRD_PARTY_LIBS})
 #add_executable(read_test read_test.cc)
 #target_link_libraries(read_test GlobalVisionLibrary)
 
-add_executable(demo_navigation demo_navigation.cc)
-target_link_libraries(demo_navigation GlobalVisionLibrary)
+#add_executable(demo_navigation demo_navigation.cc)
+#target_link_libraries(demo_navigation GlobalVisionLibrary)
 
 
 add_executable(call_interface_demo call_interface_demo.cc)

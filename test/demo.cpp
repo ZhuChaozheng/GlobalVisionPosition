@@ -54,7 +54,7 @@ void StopCar(Car &car)
     udp udp_comm;
     int sock_fd = udp_comm.udp_init(ip);
     // send data through udp
-    udp_comm.send_data(sock_fd, a);
+    udp_comm.send_data(sock_fd, a, sizeof(a));
     cout << marker << " stopped!" << endl;
 }
 

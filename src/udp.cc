@@ -19,11 +19,12 @@ int udp::udp_init(string ip)
     return sock_fd;  
 }
 int udp::send_data(const int sock_fd, 
-            const char* send_buf) 
+            const char* send_buf, const int len) 
 {
     int send_num; 
+    cout << "send_buf: " << sizeof(send_buf) << endl;
     send_num = sendto(sock_fd, send_buf, 
-        6, 0, (struct sockaddr *)&addr_serv_, len_);  
+        len, 0, (struct sockaddr *)&addr_serv_, len_);  
 
     if(send_num < 0)  
     {  
@@ -35,6 +36,21 @@ int udp::send_data(const int sock_fd,
     return 1;  
 }
 
+void char2float(char *src, float *target)
+{
+    for(int i = 0; i < 200; i = i + 4)
+    {
+        char temp[4];
+        temp[0] = src[i];
+        temp[1] = src[i + 1];
+        temp[2] = src[i + 2];
+        temp[3] = src[i + 3];
+
+        target = (float*)(&temp);
+        cout <<"target " << *target << endl;
+        cout << "i " << i << endl;
+    }
+}
 
 void udp::handle_udp_msg(int fd)
 {
@@ -54,11 +70,14 @@ void udp::handle_udp_msg(int fd)
             printf("recieve data fail!\n");
             return;
         }
-        printf("client:%s\n",buf);  
-        memset(buf, 0, BUFF_LEN);
-        sprintf(buf, "I have recieved %d bytes data!\n", count);  // reply client
-        printf("server:%s\n",buf);  
-        sendto(fd, buf, BUFF_LEN, 0, (struct sockaddr*)&clent_addr, len);  // send message to client
+        float *w;
+        char2float(buf, w);
+        cout << "print in udp handle" << endl;
+        // printf("client:%s\n",buf);  
+        // memset(buf, 0, BUFF_LEN);
+        // sprintf(buf, "I have recieved %d bytes data!\n", count);  // reply client
+        // printf("server:%s\n",buf);  
+        // sendto(fd, buf, BUFF_LEN, 0, (struct sockaddr*)&clent_addr, len);  // send message to client
     }
 }
 

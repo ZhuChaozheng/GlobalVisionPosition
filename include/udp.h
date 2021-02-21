@@ -13,7 +13,7 @@
 #include <string>  
 #include <iostream>
   
-#define DEST_PORT 10000    
+#define DEST_PORT 8888
 #define SERVER_PORT 8888
 #define BUFF_LEN 1024
 
@@ -24,7 +24,8 @@ class udp
 public:
     int udp_init(const string ip);
     int send_data(const int sock_fd, 
-            const char* send_buf);
+            const char* send_buf, 
+            const int len);
     void udp_server_init();
     void handle_udp_msg(int fd);
 private:     

@@ -312,7 +312,7 @@ void pid::controlSpeedAndAngular(Car &car)
     udp udp_comm;
     int sock_fd = udp_comm.udp_init(ip);
     // stop car in emergency
-    int stop_flag = car.get_stop_flag();
+    int stop_flag = (int)car.get_stop_flag();
     if (stop_flag)
     {
         a[1] = 0x00;
@@ -321,7 +321,7 @@ void pid::controlSpeedAndAngular(Car &car)
         a[4] = 0x00;
     }
     // send data through udp
-    udp_comm.send_data(sock_fd, a);
+    udp_comm.send_data(sock_fd, a, sizeof(a));
     // for (int i = 0; i < 6; i++)
     //     cout << hex << (int)a[i] << dec << endl;
     /*
