@@ -14,6 +14,8 @@
 #include <iostream>
   
 #define DEST_PORT 10000    
+#define SERVER_PORT 8888
+#define BUFF_LEN 1024
 
 using namespace std;
 
@@ -23,7 +25,8 @@ public:
     int udp_init(const string ip);
     int send_data(const int sock_fd, 
             const char* send_buf);
-
+    void udp_server_init();
+    void handle_udp_msg(int fd);
 private:     
     struct sockaddr_in addr_serv_;
     int len_;

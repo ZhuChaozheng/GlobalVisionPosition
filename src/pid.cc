@@ -61,8 +61,8 @@ float pid::get_slope_pid(float error, Car &car, float scalar){
         else if( _integrator > 500 )
             _integrator = 500;
         output += _integrator;
-    cout << "angel _output: " << output << endl;
-    cout << "integrator: " << _integrator << endl;
+     // cout << "angel _output: " << output << endl;
+     // cout << "integrator: " << _integrator << endl;
         car.set_integrator(_integrator);
     }
     // _integrator = car.get_integrator();
@@ -135,13 +135,13 @@ float pid::get_speed_pid(float error, Car &car, float scalar){
             _integrator = -400;
         else if( _integrator > 400 )
             _integrator = 400;
-        cout<<"_integrator:"<<_integrator<<endl;
+         // cout<<"_integrator:"<<_integrator<<endl;
         output += _integrator;
         //if((output > 500) || (output<-500) )
           //  output = output - _integrator;
         if(output >0)
             output =0;
-    cout << "speed _output: " << output << endl;
+    // cout << "speed _output: " << output << endl;
         car.set_speed_integrator(_integrator);
     }
     // _integrator = car.get_integrator();
@@ -160,7 +160,7 @@ float pid::get_speed_pid_incre(float error, Car &car, float scalar)
     //   PID计算输出增量
     float Speed_error1 = car.get_speed_error1();
     float Speed_error2 = car.get_speed_error2();
-     cout<<"move_error:"<<error<<endl;
+     // cout<<"move_error:"<<error<<endl;
      float speed_intergrator=speed_i_ * error;
      if (speed_intergrator<-50)
         speed_intergrator=-50;
@@ -178,7 +178,7 @@ float pid::get_speed_pid_incre(float error, Car &car, float scalar)
     // cout << "Speed_error1: " << Speed_error1 << endl;
     // cout << "Speed_error2: " << Speed_error2 << endl;  
     // Speed_error1 = error;
-   cout << "Speed_output_increment: " << Speed_output_increment << endl; 
+   // cout << "Speed_output_increment: " << Speed_output_increment << endl; 
     
     //输出速度增量限幅，防止速度过快出现过冲等现象，具体的speed_output_limit需要根据实际调节
    //if( Speed_output_increment < -speed_output_incre_limit)
@@ -198,7 +198,7 @@ float pid::get_speed_pid_incre(float error, Car &car, float scalar)
           Speed_output = -500;
     car.set_speed_output(Speed_output);
     Speed_output = car.get_speed_output();
-    cout << "Speed_output: " << Speed_output << endl;
+    // cout << "Speed_output: " << Speed_output << endl;
     
     return Speed_output;    
 }
@@ -212,13 +212,13 @@ float pid::get_speed_pid_incre(float error, Car &car, float scalar)
 **/
 void pid::controlSpeedAndAngular(Car &car)
 {
-    double target_slope = car.get_target_slope();
+    float target_slope = car.get_target_slope();
     if (target_slope > 180)
     {
         target_slope = target_slope-360;
     }
-    double current_slope = car.get_slope();
-    double error_angel = current_slope - target_slope;
+    float current_slope = car.get_slope();
+    float error_angel = current_slope - target_slope;
      
     if( error_angel < -180)
         error_angel = error_angel+360;
@@ -227,9 +227,9 @@ void pid::controlSpeedAndAngular(Car &car)
     slope_p_ = car.get_slope_p();
     slope_i_ = car.get_slope_i();
     slope_d_ = car.get_slope_d();
-    cout << "slope_p: " << slope_p_ << endl;
-    cout << "slope_i: " << slope_i_ << endl;
-    cout << "slope_d: " << slope_d_ << endl;
+    // cout << "slope_p: " << slope_p_ << endl;
+    // cout << "slope_i: " << slope_i_ << endl;
+    // cout << "slope_d: " << slope_d_ << endl;
 
     // update parameter
     pid pid_turn;
@@ -237,7 +237,7 @@ void pid::controlSpeedAndAngular(Car &car)
  //    if (abs(error_angel) > 5)
  //        pid_turn.set_pid(param_turn_p - 0.4, param_turn_i, 
  //           param_turn_d + 0.02);   
-    cout << "error_angel: " << error_angel << endl; 
+      cout << "error_angel: " << error_angel << endl; 
     wp_angel_ = pid_turn.get_slope_pid(error_angel, car, 100);
     if (wp_angel_ > 2000)
         wp_angel_ = 2000;
@@ -246,11 +246,11 @@ void pid::controlSpeedAndAngular(Car &car)
     float target_speed = car.get_target_speed();
     float currentSpeed = car.get_speed();
     float error_move=target_speed - currentSpeed;
-    cout << "error_move: " << error_move << endl;
+     cout << "error_move: " << error_move << endl;
     // set a minimax value
-    if (abs(error_move) < 1) return;
-    cout << "target_speed: " << target_speed << endl;
-    cout << "currentSpeed: " << currentSpeed << endl;
+   //if (abs(error_move) < 1) return;
+    // cout << "target_speed: " << target_speed << endl;
+    // cout << "currentSpeed: " << currentSpeed << endl;
     // Normalized on specifical value, here is 1m
   //  error_move /= 1000;
     error_move = (abs(error_move) > 1000 )? 1:error_move;
@@ -265,14 +265,14 @@ void pid::controlSpeedAndAngular(Car &car)
     // wp_move_ = pid_move.get_speed_pid_incre(error_move, 
     //         car, 100);
     wp_move_ = pid_move.get_speed_pid(error_move, car, 100);
-    cout<<"wp_move_"<<wp_move_<<endl;
+      //cout<<"wp_move_"<<wp_move_<<endl;
     if(wp_move_<-600.0)
         wp_move_=-600;
     else if (wp_move_>600)
     {
         wp_move_=600;/* code */
     }
-    cout<<"wp_move_"<<wp_move_<<endl;
+    // cout<<"wp_move_"<<wp_move_<<endl;
     //wp_move_=-500;
     float duty_left = -wp_angel_/2 + (int)wp_move_; 
     duty_left *= -1;
@@ -311,6 +311,59 @@ void pid::controlSpeedAndAngular(Car &car)
     string ip = car.get_ip();
     udp udp_comm;
     int sock_fd = udp_comm.udp_init(ip);
+    // stop car in emergency
+    int stop_flag = car.get_stop_flag();
+    if (stop_flag)
+    {
+        a[1] = 0x00;
+        a[2] = 0x00;
+        a[3] = 0x00;
+        a[4] = 0x00;
+    }
     // send data through udp
     udp_comm.send_data(sock_fd, a);
+    // for (int i = 0; i < 6; i++)
+    //     cout << hex << (int)a[i] << dec << endl;
+    /*
+     * 11
+4
+44
+3
+ffffff8c
+22
+
+11
+4
+5e
+3
+72
+22
+
+*/
+    /*
+     11
+1
+30
+ffffffff
+39
+22
+
+11
+0
+ffffffe1
+fffffffe
+ffffffe2
+22
+
+
+11
+1
+53
+fffffffe
+ffffff84
+22
+*/
+
+
+
 }

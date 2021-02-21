@@ -39,7 +39,7 @@ public:
 
 // define graph
 typedef Point2f Vertex; // vertex is point type
-typedef double WeightValue; // weight value
+typedef float WeightValue; // weight value
 
 class EdgeNode
 {
@@ -73,28 +73,30 @@ Mat src_gray;
 Mat cimage;
 
 bool Cmp(const Point2f a, const Point2f b);
+void AnalyzeContours(const Mat &src_gray, Mat &barriers_image,
+		vector<Point2f> &pointSet);
 void ThreshCallBack(const Mat &src_gray, 
 		vector<Point2f> &pointSet);
 float GetCross(Point2f &p1, Point2f &p2, Point2f &p);
 bool IsPointInRotatedRect(RotatedRect &rotated_rect, Point2f &p);
 // bool PointNeighbourVector(const Point2f currentPoint, 
-// 		vector<Point2f>	double_dup_point_set);
+// 		vector<Point2f>	float_dup_point_set);
 bool Exist(Car& car, vector<Car>& carStateSet, Car& lastCar);
 bool NeighbourPoint(Point2f pointA, Point2f pointB);
 void ClassificationCar(vector<Point2f> *pointSet, 
 		vector<Car> &carSet);
-double GetPixelDistance(Point2f pointA, Point2f pointB);
+float GetPixelDistance(Point2f pointA, Point2f pointB);
 void GetCarKeyAttribution(Car& car);
 int FindKeyPoint(Point2f& point, Point2f& tempPoint, 
 		vector<Point2f>& pointSet);
 
 void DetermineTriangleVertex(vector<Point2f>& 
 		pointSet, Car& car);
-double GetAbsoluteOrientation(vector<Point2f>& 
+float GetAbsoluteOrientation(vector<Point2f>& 
 		pointSet, Car& car);
-double GetSlope(Point2f first, Point2f second);
+float GetSlope(Point2f first, Point2f second);
 
-double Get3dSlope(Point3f first, Point3f second);
+float Get3dSlope(Point3f first, Point3f second);
 
 void DeleteCar(Car& car, vector<Car>& carStateSet);
 

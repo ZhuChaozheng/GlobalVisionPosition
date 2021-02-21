@@ -3,8 +3,8 @@
 Point2f GetAveragePoint(vector<Point2f>& pointSet)
 {
 	Point2f averagePoint;
-	double sumX;
-	double sumY;
+	float sumX;
+	float sumY;
 	int num = 0;
 
 	for (auto iter = pointSet.begin(); iter != pointSet.end();)
@@ -41,6 +41,134 @@ void RotatedRectROI(const Mat& src, Mat& cropped,
             cropped);
 }
 
+void AnalyzeContours(const Mat &src_gray, Mat &barriers_image,
+	vector<Point2f> &pointSet)
+{
+	Mat thresh_output;
+	thresh_output = src_gray.clone();
+    // find contours
+    vector<vector<Point>> contours;
+    findContours(src_gray, contours, RETR_TREE, 
+            CHAIN_APPROX_SIMPLE);
+    cimage = Mat::zeros(thresh_output.size(), CV_8UC3); // global
+    
+    vector<RotatedRect> dup_rectangle_set;
+    vector<vector<Point>> next_notice_contours;
+    for (size_t t = 0; t < contours.size(); t++) 
+    {
+    	// drawContours(cimage, contours, static_cast<int>(t), 
+	    //             Scalar(255, 0, 255), 2, 8);   
+        // only select specific area
+        RotatedRect rotatedRect = minAreaRect(contours[t]);
+        Rect rect = rotatedRect.boundingRect();
+        
+        // geometry analysis
+        float w = rotatedRect.size.width;
+
+        float h = rotatedRect.size.height;
+        float areaRect = w * h;
+        float rate = w / h;
+
+        float perimeter = arcLength(contours[t], true);
+        // the minimum perimeter is 240
+        if (perimeter > 230)
+        {
+        	// barriers
+        	// drawContours(barriers_image, contours, static_cast<int>(t), 
+	        //         black, 2, 8);  
+	        /*drawContours(barriers_image, contours, static_cast<int>(t), 
+	                Scalar(255, 0, 255), 2, 8); */
+      //   	namedWindow( "barriers_image", 1 );
+    		// imshow("barriers_image", barriers_image);
+        }
+        else if (perimeter > 130)
+        // if (perimeter < 130 | perimeter > 230 | rate < 0.85)
+        // 	continue;
+        {
+        	Point2f currentPoint = rotatedRect.center;
+	        // TODO
+	        // remove the shadow of wheels
+	        // remove duplicate center of rectangle
+	        if (dup_rectangle_set.size() == 0)
+	        {
+	        	dup_rectangle_set.push_back(rotatedRect);
+	        	continue;
+	        }
+	        // copy vector
+	        vector<RotatedRect> float_dup_rectangle_set;
+	        for(auto iter = dup_rectangle_set.begin(); 
+	        		iter != dup_rectangle_set.end();)
+	        {
+
+	        	float_dup_rectangle_set.push_back(*iter);
+	        	iter ++;
+	        }
+	        /*
+	         * here, should be replaced with a special function
+	         * bool PointNeighbourVector(Point2f currentPoint, 
+	         *  vector<Point2f> float_dup_point_set)
+	         *
+	         */
+	    	bool flag = true;
+	        for(auto iter = float_dup_rectangle_set.begin(); 
+	        		iter != float_dup_rectangle_set.end();)
+	        {
+	        	Point2f tempPoint = (*iter).center;	        	
+	        	if (!NeighbourPoint(tempPoint, currentPoint))
+				{
+					flag = true;
+				}
+				else
+				{
+					flag = false;
+					break;
+				}
+				iter ++;
+	        }
+		    if (flag)
+	        	dup_rectangle_set.push_back(rotatedRect);
+	        float_dup_rectangle_set.clear();
+        }
+        else
+        {
+        	// next notice points
+        	next_notice_contours.push_back(contours[t]);
+        	// cout << "next: " << next_notice_contours.size() << endl;
+        }
+    }
+
+    float radius = 4;
+    int i = 0;
+    for (size_t t = 0; t < next_notice_contours.size(); t++) 
+    {
+        float area = contourArea(next_notice_contours[t]);
+        RotatedRect rotated_rect = minAreaRect(next_notice_contours[t]);
+        // // geometry analysis
+        if (area > 2 & area < 40) 
+        {
+        	for (auto iter = dup_rectangle_set.begin();
+		    			iter != dup_rectangle_set.end();)
+		    {
+		    	// iter is RotatedRect class
+		    	// display the position of big square
+		    	if (IsPointInRotatedRect((*iter), 
+		    				rotated_rect.center))
+		        {
+		        	// rotated_rect is small square
+		        	pointSet.push_back(rotated_rect.center);
+		        	circle(cimage, rotated_rect.center, cvRound(radius), 
+						Scalar(255, 0, 0), 2, LINE_AA);
+		        }
+		    	iter ++;
+		    }
+    	}
+    }
+   /*  namedWindow( "thresh_output", 1 );
+    imshow("thresh_output", cimage);
+     waitKey(5);*/
+    // cout << "size(): " << pointSet.size() << endl;
+}
+
 void ThreshCallBack(const Mat &src_gray, 
 	vector<Point2f> &pointSet)
 {
@@ -70,15 +198,33 @@ void ThreshCallBack(const Mat &src_gray,
         float areaRect = w * h;
         float rate = w / h;
 
-        double perimeter = arcLength(contours[t], true);
+        float perimeter = arcLength(contours[t], true);
+
         // the minimum perimeter is 240
-        if (perimeter > 230)
+        if (perimeter > 230 & rate < 1.3)
         {
         	// barriers
         	drawContours(barriers_image, contours, static_cast<int>(t), 
-	                Scalar(255, 0, 255), 2, 8);  
-        	namedWindow( "barriers_image", 1 );
-    		imshow("barriers_image", barriers_image);
+	                Scalar(255, 0, 255), 2, 8);
+      //   	Point2f vtx[4];
+      //   	rotatedRect.points(vtx);
+		    // // calculate the average point
+		    // Point2f average, sum;
+		    // for( int i = 0; i < 4; i++ )
+		    // {
+		    // 	cout << vtx[i] << endl;
+		    // 	sum.x = vtx[i].x + sum.x;
+		    // 	sum.y = vtx[i].y + sum.y;
+		    // 	// cout << vtx[i] << vtx[(i+1)%4] << endl;
+		    // 	// line(cimage, vtx[i], vtx[(i+1)%4], 
+		    //  //    		Scalar(0, 255, 0), 1, LINE_AA); // green
+		    // }
+		    // average.x = sum.x / 4;
+		    // average.y = sum.y / 4;
+		    // cout << "average: " << average << endl;
+         /*	namedWindow( "barriers_image", 1 );
+    		 imshow("barriers_image", barriers_image);
+    		 waitKey(5);*/
         }
         else if (perimeter > 130 & perimeter < 230 & rate > 0.85 
         		& rate < 1.5)
@@ -93,23 +239,23 @@ void ThreshCallBack(const Mat &src_gray,
 	        	continue;
 	        }
 	        // copy vector
-	        vector<RotatedRect> double_dup_rectangle_set;
+	        vector<RotatedRect> float_dup_rectangle_set;
 	        for(auto iter = dup_rectangle_set.begin(); 
 	        		iter != dup_rectangle_set.end();)
 	        {
 
-	        	double_dup_rectangle_set.push_back(*iter);
+	        	float_dup_rectangle_set.push_back(*iter);
 	        	iter ++;
 	        }
 	        /*
 	         * here, should be replaced with a special function
 	         * bool PointNeighbourVector(Point2f currentPoint, 
-	         *  vector<Point2f> double_dup_point_set)
+	         *  vector<Point2f> float_dup_point_set)
 	         *
 	         */
 	    	bool flag = true;
-	        for(auto iter = double_dup_rectangle_set.begin(); 
-	        		iter != double_dup_rectangle_set.end();)
+	        for(auto iter = float_dup_rectangle_set.begin(); 
+	        		iter != float_dup_rectangle_set.end();)
 	        {
 	        	Point2f tempPoint = (*iter).center;	        	
 	        	if (!NeighbourPoint(tempPoint, currentPoint))
@@ -125,7 +271,7 @@ void ThreshCallBack(const Mat &src_gray,
 	        }
 		    if (flag)
 	        	dup_rectangle_set.push_back(rotatedRect);
-	        double_dup_rectangle_set.clear();
+	        float_dup_rectangle_set.clear();
         }
         else
         {
@@ -138,21 +284,21 @@ void ThreshCallBack(const Mat &src_gray,
     int i = 0;
     for (size_t t = 0; t < next_notice_contours.size(); t++) 
     {
-    	double area = contourArea(next_notice_contours[t]);
+    	float area = contourArea(next_notice_contours[t]);
 
         RotatedRect rotated_rect = minAreaRect(next_notice_contours[t]);
-        // // geometry analysis
-        if (area < 40) 
+        // geometry analysis
+        if (area < 40)
         {
-        	  circle(cimage, rotated_rect.center, cvRound(radius), 
-						Scalar(255, 0, 0), 2, LINE_AA);
+        	circle(cimage, rotated_rect.center, cvRound(radius), 
+					Scalar(255, 0, 0), 2, LINE_AA);
         	for (auto iter = dup_rectangle_set.begin();
-		    			iter != dup_rectangle_set.end();)
+		    		iter != dup_rectangle_set.end();)
 		    {
 		    	// iter is RotatedRect class
 		    	// display the position of big square
 		    	if (IsPointInRotatedRect((*iter),
-		    				rotated_rect.center))
+		    			rotated_rect.center))
 		        {
 		        	// cout << rotated_rect.center << endl;
 		        	// rotated_rect is small square
@@ -160,13 +306,13 @@ void ThreshCallBack(const Mat &src_gray,
 		        	circle(cimage, rotated_rect.center, cvRound(radius), 
 						Scalar(255, 0, 0), 1, LINE_AA); // blue
 		        }
-		    	iter ++;		    
+		    	iter ++;
 		    }
     	}
     }
-   namedWindow( "thresh_output", 0 );
-    imshow("thresh_output", cimage);
-    waitKey(5);
+     // namedWindow( "thresh_output", 0 );
+     // imshow("thresh_output", cimage);
+     // waitKey(5);
     // cout << "size(): " << pointSet.size() << endl;
 }
 
@@ -238,7 +384,7 @@ void DeletePointAttriValue(int pixelValue, vector<PointAttri>* pointSet)
 }
 
 // return w((x_1 - x_2)^2 + (y_1 - y_2)^2)^(1/2)
-double GetPixelDistance(Point2f pointA, Point2f pointB)
+float GetPixelDistance(Point2f pointA, Point2f pointB)
 {
     return sqrt((pointA.x - pointB.x) * (pointA.x - pointB.x) 
     	+ (pointA.y - pointB.y) * (pointA.y - pointB.y));
@@ -255,7 +401,8 @@ void ClassificationCar(vector<Point2f> *pointSet,
 		vector<Car> &car_set)
 {	
 	// if you remount the camera, may be this parameter should be tuned
-    double ridus = 35; // mini distance among color blocks of car
+    // float ridus = 35; // mini distance among color blocks of car
+    float ridus = 40;
     vector<Point2f> point_set;
     int num = 0;
     Point2f firstPoint;   
@@ -272,7 +419,7 @@ void ClassificationCar(vector<Point2f> *pointSet,
 
 		Point2f tempPoint = *point;
 		// cout << tempPoint << endl;
-		double distance = GetPixelDistance(firstPoint, tempPoint);
+		float distance = GetPixelDistance(firstPoint, tempPoint);
 		// cout << distance << endl;
 		if (distance < ridus) 
 		{
@@ -287,7 +434,7 @@ void ClassificationCar(vector<Point2f> *pointSet,
 	}
 	// cout << "classificationCar: " << point_set.size() << endl;
 	int marker = point_set.size() - 3;
-	cout << marker << endl;
+	// cout << marker << endl;
 	if (marker >= 0)
 	{
 		// search 
@@ -315,7 +462,7 @@ int FindKeyPoint(Point2f& point, Point2f& tempPoint, vector<Point2f>& pointSet)
 	for (auto iter = pointSet.begin(); iter != pointSet.end();)
 	{
 		tempPoint = *iter;
-		double distance = GetPixelDistance(point, tempPoint);
+		float distance = GetPixelDistance(point, tempPoint);
 		
 		if (distance < MAX_DISTANCE & distance > MIN_DISTANCE)
 			return 0;
@@ -327,24 +474,24 @@ int FindKeyPoint(Point2f& point, Point2f& tempPoint, vector<Point2f>& pointSet)
 
 // return absolute orientation
 // GetSlope(center, vertex);
-double GetSlope(Point2f first, Point2f second)
+float GetSlope(Point2f first, Point2f second)
 {
 	float y = float(first.y - second.y);
 	float x = float(second.x - first.x);
-	double slope = atan2(y, x) * 180 / PI;
+	float slope = atan2(y, x) * 180 / PI;
 	// 0~360
 	if (slope < 0)
 		slope = 360 + slope;
   	return slope;
 }
 
-double Get3dSlope(Point3f first, Point3f second)
+float Get3dSlope(Point3f first, Point3f second)
 {
-	// double param = double(second.x - first.x) / double(first.y - second.y);	
+	// float param = float(second.x - first.x) / float(first.y - second.y);	
 	float y = float(first.y - second.y);
 	float x = float(second.x - first.x);
 	// distinguish atan & atan2
-	double slope = atan2(y, x) * 180 / PI;
+	float slope = atan2(y, x) * 180 / PI;
 	// 0~360
 	if (slope < 0)
 		slope = 360 + slope;
@@ -365,19 +512,30 @@ void GetCarKeyAttribution(Car& car)
 	vector<Point2f> pointSet = car.get_point_set();	
 	if (pointSet.size() != 0)
 	{
-		double slope = GetAbsoluteOrientation(pointSet, car); // stuff a triangle
-		double lastSlope = car.get_slope();
-		cout << "lastSlope: " << lastSlope << endl;
+
+		float slope = GetAbsoluteOrientation(pointSet, car); // stuff a triangle
+		//car.set_slope(slope);
+		float lastSlope = car.get_slope();
+		// cout << "here slope: " << slope << endl;
+		// cout << "lastSlope: " << lastSlope << endl;
 		// limit the expectional error from recognition
-		if (init_slope_flag)
+		if (car.get_init_slope_flag())
 		{
 			car.set_slope(slope);
+			car.set_init_slope_flag(false);
 			return;
 		}
-		if(abs(slope - lastSlope) > 50)
-			car.set_slope(lastSlope);
-		else
+		cout << "slope - lastSlope: " << slope - lastSlope << endl;
+		cout << "slope - lastSlope: " << fabs(slope - lastSlope) << endl;
+		if ((fabs(slope - lastSlope) < 50.0) ||(fabs(slope - lastSlope) >300.0))
+		
 			car.set_slope(slope);
+		
+		else			
+		{
+			cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+			car.set_slope(lastSlope);
+		}
 	}	
 }
 
@@ -387,9 +545,9 @@ void GetCarKeyAttribution(Car& car)
  *
  */
 EdgeNode FindMaxDistance(const vector<Point2f>& pointSet, 
-		double maxDistance)
+		float maxDistance)
 {
-	double tempDistance = 0;
+	float tempDistance = 0;
 	EdgeNode edgeNode;
 	// int num = 0;
 	for (auto iter = pointSet.begin(); iter != pointSet.end();)
@@ -400,7 +558,7 @@ EdgeNode FindMaxDistance(const vector<Point2f>& pointSet,
 		{
 
 			Point2f tempPoint = *iterTemp;
-			double distance = GetPixelDistance(
+			float distance = GetPixelDistance(
 					currentPoint, tempPoint);
 			if ((tempDistance < distance) & 
 					(distance != maxDistance)) 
@@ -433,7 +591,7 @@ void DetermineTriangleVertex(vector<Point2f>& pointSet, Car& car)
 	// search max distance between points, 
 	// equals to one isosceles
 	EdgeNode edgeNode = FindMaxDistance(pointSet, 0);
-	double maxDistance = edgeNode.Weight;
+	float maxDistance = edgeNode.Weight;
 	// search second max distance between points,
 	// equals to another isosceles
 	EdgeNode edgeNodeAnother = FindMaxDistance(pointSet, 
@@ -480,7 +638,7 @@ void DetermineTriangleVertex(vector<Point2f>& pointSet, Car& car)
  * 
  *
  */
-double GetAbsoluteOrientation(vector<Point2f>& pointSet,
+float GetAbsoluteOrientation(vector<Point2f>& pointSet,
 		Car& car)
 {
 	if (pointSet.size() == 0)
@@ -500,7 +658,7 @@ double GetAbsoluteOrientation(vector<Point2f>& pointSet,
 bool NeighbourPoint(Point2f pointA, Point2f pointB)
 {
 	bool flag = true;
-	double distance = GetPixelDistance(pointA, pointB);
+	float distance = GetPixelDistance(pointA, pointB);
 	if (distance < 4)
 		return flag;
 	flag = false;

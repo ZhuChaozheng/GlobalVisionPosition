@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/time.h>
+#include <signal.h>
 #include <opencv2/plot.hpp>
 #include "timer.h"
 #include "kalman.h"
@@ -18,16 +20,100 @@
 #include "pid.h"
 #include "image_process.h"
 #include "init_camera.h"
-#include "2d_transformation_3d.h"
+#include "image_transformation.h"
+#include "file_operation.h"
 
 using namespace cv;
 using namespace std;
 
-
+enum trajectory_type
+{
+    RECTANGLE = 1,
+    CIRCLE = 2,
+    TRIANGLE = 3 
+};
 // classification of car
 vector<Car> car_set;
+Timer traTimer;
 
-// double target_angel = 90.0;
+bool app_stopped = false;
+void sigint_handler(int sig) {
+    if (sig == SIGINT) 
+    {
+        std::cout << "C pressed!" << endl;
+        app_stopped = true;
+    }
+}
+
+void StopCars()
+{
+    
+    /* define comm format*/
+    char a[6] = {0x11,0x00,0x00,0x00,0x00,0x22};
+    // build communication based on udp
+    for (auto iter = car_set.begin(); 
+                iter != car_set.end();)
+    {
+        int marker = (*iter).get_marker();
+        string ip = (*iter).get_ip();
+        udp udp_comm;
+        int sock_fd = udp_comm.udp_init(ip);
+        // send data through udp
+        udp_comm.send_data(sock_fd, a);
+        cout << marker << " stopped!" << endl;
+        iter ++;
+    }
+    
+}
+
+/*
+ * modify car's slope and sleep, according to 
+ * the marker.
+ * 
+ * 
+ */
+void UpdateSlope(const float target_slope,
+        const int marker)
+{
+    for (auto iter = car_set.begin(); 
+            iter != car_set.end();)
+    {
+        int marker_ = (*iter).get_marker();
+        if (marker_ == marker)
+        {
+            (*iter).set_target_slope(target_slope);
+            break;
+        }
+    }
+}
+
+
+/* 
+ * 
+ * define multiple trajectory modules, loop 0, 90, 180, 270
+ * to form a rectangle. 
+ *
+ *
+ */
+// void TimerTrajectory(const int trajectory_type, 
+//         const int marker)
+// {
+//     switch(trajectory_type):
+//         case RECTANGLE:
+//             // TODO
+//             UpdateSlope(0, marker);
+//             Timer timer;
+//             timer.startOnce(4000, UpdateSlope(90, marker));           ;
+//             // Sleep(2)
+//             break;
+//         case CIRCLE:
+//             // TODO
+//             break;
+//         case TRIANGLE:
+//             // TODO
+//             break;
+
+// }
 
 void ConfigParamtersRead()
 {
@@ -39,13 +125,13 @@ void ConfigParamtersRead()
             speed_p_, speed_i_, speed_d_;
     string ip_;
     int port_;
-    double target_slope_; 
+    float target_slope_; 
     float target_speed_; 
     bool flag = false; // match existing car
     // clear old car set
     
     // car_set.erase(car_set.begin(), car_set.end());
-    for (int i = 0; i <= 5; i ++) {
+    for (int i = 4; i <= 4; i ++) {
         string front_str = "marker_";
         string combined_str = front_str + to_string(i);
         fs[combined_str] >> marker_;
@@ -89,6 +175,7 @@ void ConfigParamtersRead()
         front_str = "target_speed_";
         combined_str = front_str + to_string(i);
         fs[combined_str] >> target_speed_;
+        // cout << "read target_speed_: " << target_speed_ << endl;
         for (auto iter = car_set.begin(); 
                 iter != car_set.end();)
         {
@@ -102,6 +189,7 @@ void ConfigParamtersRead()
                 flag = true;
                 break;
             }
+            iter ++;
         }
         if (!flag)
         {
@@ -123,22 +211,65 @@ void init()
     InitCamera();
 }
 
+/* 
+ * 
+ * define multiple trajectory modules, loop 0, 90, 180, 270
+ * to form a rectangle. 
+ *
+ *
+ */
+void TimerTrajectory(const trajectory_type type, 
+        const int marker)
+{
+    switch(type){
+        case RECTANGLE:
+            // TODO
+            // UpdateSlope(0, marker);
+            cout << "RECTANGLE!!!!!!!" << endl;
+            traTimer.startOnce(0, bind(UpdateSlope, 0, marker));
+            traTimer.startOnce(5000, bind(UpdateSlope, 90, marker));
+            // traTimer.startOnce(10000, bind(UpdateSlope, 180, marker));
+            // traTimer.startOnce(15000, bind(UpdateSlope, 270, marker));
+            // timer.startOnce(4000, bind(UpdateSlope, 90, marker));
+            // Sleep(2)
+            break;
+        case CIRCLE:
+            // TODO
+            UpdateSlope(90, marker);
+            break;
+        case TRIANGLE:
+            // TODO
+            traTimer.startOnce(0, bind(UpdateSlope, 0, marker));
+            traTimer.startOnce(2000, bind(UpdateSlope, 120, marker));
+            traTimer.startOnce(5000, bind(UpdateSlope, 240, marker));
+            break;
+    }        
+
+}
+
 int main()
 {
+    // TimerTrajectory(RECTANGLE, 5);
     // ***** dynamicly tune parameter thread ********
     // intialize timer thread
     Timer timer;
-    // execute task every 2000 microsecond
+    // // execute task every 2000 microsecond
     timer.start(2000, std::bind(ConfigParamtersRead));
+    // ConfigParamtersRead();
+
     // *********** main thread ******************
-    clock_t lastTime = clock();
+    // register signal ctrl+c
+    signal(SIGINT, sigint_handler);
+    // clock_t lastTime = clock();
+    struct timeval lastTime, currentTime;
+    float consumeTime;
+    gettimeofday(&lastTime,NULL);
     vector<Car> carStateSet;
-    Point3f gap_point(0, 10000, 0);
     init();
     
     // Initialize Data
     // define the angle range of 0-360
-    vector<double> sine_angle;
+    vector<float> sine_angle;
     for( int t = 0; t < 100; t++ ){
         sine_angle.push_back( (rand() % 360));
     }
@@ -148,7 +279,7 @@ int main()
             cv::plot::Plot2d::create( data_angle );
 
     // define the speed range of 0-100
-    vector<double> sine_speed;
+    vector<float> sine_speed;
     for( int t = 0; t < 100; t++ ){
         sine_speed.push_back( (rand() % 300));
     }
@@ -158,36 +289,55 @@ int main()
             cv::plot::Plot2d::create( data_speed );
 
     // define the manhattan distance range of 0-100
-    vector<double> sine_manhattan_distance;
+    vector<float> sine_manhattan_distance;
     for( int t = 0; t < 100; t++ ){
         sine_manhattan_distance.push_back( (rand() % 300));
-    } 
+    }
     // Create Ploter
     cv::Mat data_manhattan_distance( sine_manhattan_distance );
     Ptr<cv::plot::Plot2d> plot_manhattan_distance = 
             cv::plot::Plot2d::create( data_manhattan_distance );
     
     // init parameter of pid
-    ConfigParamtersRead();
+    // ConfigParamtersRead();
+    // return 0;
+    // Kalman
+    Kalman myFilterSpeed = Kalman(0.125,32,1023,0);
+    float filtered_speed; 
     
     Mat src;
     Mat src_thresh;
+    float sum_time;
+    int i = 0;
+    // TimerTrajectory(RECTANGLE, 0);
+    // TimerTrajectory(RECTANGLE, 3);
+    // TimerTrajectory(RECTANGLE, 5);
     while (1) 
     {
+
+        cout << i++ << endl;
+        if (app_stopped) break;
         StartGrabStream(src);
         if (src.empty())
         {
             cout << "could not read the image." << endl;
             return 0;
         }
-        // blur(src, src, Size(3, 3));
-        // Canny( src, src_thresh, 50, 50 * 2 );
-
-        threshold(src, src_thresh, 60, 255, THRESH_BINARY);
-        // imshow("src_thresh", src_thresh);
+        // TODO
+        // warpAffine
+        // Mat warp_rotate_dst;
+        // cout << cameraMatrix << endl;
+        // // warpAffine( src, warp_rotate_dst, cameraMatrix, src.size() );
+        // warpAffine(src, warp_rotate_dst, cameraMatrix, src.size(), INTER_CUBIC);
+        // imwrite("warp_dst.jpg", src);
+        // imwrite("warp_rotate_dst.jpg", warp_rotate_dst);
+        // return 0;
+        threshold(src, src_thresh, 110, 255, THRESH_BINARY);
+        namedWindow( "src_thresh", 0 );
+        imshow("src_thresh", src_thresh);
 
         vector<Point2f> pointSet;
-        thresh_callback(src_thresh, pointSet);
+        ThreshCallBack(src_thresh, pointSet);
       
         int num = 0;
         // loop all the point to classify them 
@@ -195,46 +345,40 @@ int main()
         {
             if (pointSet.size() != 0)
             {
-                classificationCar(&pointSet, 
+                ClassificationCar(&pointSet, 
                       car_set); // carSet -> global variable
             }
             else
                break;
         }
 
-        // consume time 
-        clock_t currentTime = clock();
-        double consumeTime = 1000 * (currentTime - 
-            lastTime) / (double)CLOCKS_PER_SEC;
-        cout << "time" << consumeTime << "ms" << endl;
-        cout << "fps: " << 1000 / consumeTime << "Hz" << endl;
+
 
         // output car attribution
         for (auto iter = car_set.begin(); iter != car_set.end();)
         {
-            getCarKeyAttribution(*iter);
+            float target_slope = (*iter).get_target_slope();
+            cout << "target_slope " << target_slope << endl;
+            GetCarKeyAttribution(*iter);
             Point2f medianPoint = (*iter).get_median_point();
             int marker = (*iter).get_marker();
-            double slope = (*iter).get_slope();
+            float slope = (*iter).get_slope();
             Point3f targetPoint = (*iter).get_target();
 
             cout << "marker: " << marker << endl;
             cout << "slope: " << slope << endl;
-            double filteredSlope = (*iter).filter_.getFilteredValue(slope);
+            float filteredSlope = (*iter).filter_.getFilteredValue(slope);
             // cout << "filteredSlope: " << filteredSlope << endl;
             // plot curve
             sine_angle.erase(sine_angle.begin());
-            sine_angle.push_back(slope);        
+            sine_angle.push_back(slope);   
             // Render Plot Image
-            Mat image;
-            plot_angle->render( image );
+            //Mat image;
+            //plot_angle->render( image );
             // Show Image
-            imshow("curve_angle", image ); 
-
-            // target
-            // (*iter).set_target_slope(90.0);
-            // (*iter).set_target_speed(13.0);
-            double target_speed = (*iter).get_target_speed();
+            //imshow("curve_angle", image );
+            //waitKey(5);
+            float target_speed = (*iter).get_target_speed();
             // plot standard curve
             // sine_manhattan_distance.erase(sine_manhattan_distance.begin());
             // sine_manhattan_distance.push_back(target_speed);        
@@ -243,48 +387,54 @@ int main()
             // plot_manhattan_distance->render( image_manhattan_distance );
             // // Show Image
             // imshow("curve_standard_speed", image_manhattan_distance ); 
-            
+            cout << "medianPoint: " << medianPoint << endl;
             // loaded from the first line
-            Point3f worldPoint;
-            pointToWorld(medianPoint, worldPoint, rvecM1, 
-                         tvec1, cameraMatrix, s);
+            // Point3f worldPoint;
+            // PointToWorld(medianPoint, worldPoint, rvecM1, 
+            //              tvec1, cameraMatrix, s);
             Car lastCar;
 
-            if (exist((*iter), carStateSet, lastCar))
+            if (Exist((*iter), carStateSet, lastCar))
             {
-                Point lastMedianPoint = lastCar.get_median_point();
-                double lastSlope = lastCar.get_slope();
-                Point3f lastWorldPoint;
+                Point2f lastMedianPoint = lastCar.get_median_point();
+                cout << "lastMedianPoint: " << lastMedianPoint << endl;
+                float lastSlope = lastCar.get_slope();
+                float lastspeed = (*iter).get_speed();
+                // Point3f lastWorldPoint;
                 // loaded parameters from the first line
-                pointToWorld(lastMedianPoint, lastWorldPoint, 
-                        rvecM1, tvec1, cameraMatrix, s);  
+                // PointToWorld(lastMedianPoint, lastWorldPoint, 
+                //         rvecM1, tvec1, cameraMatrix, s);  
             
-                Point3f speed_three_dim = (worldPoint -
-                        lastWorldPoint) / consumeTime * 1000;
+                // Point3f speed_three_dim = (worldPoint -
+                //         lastWorldPoint) / consumeTime * 1000;
                 //cout << "speed_three_dim: " << speed_three_dim << endl;
                 // filter data from kalman
                 // add calculated value into Kalman when moving
-                //if (lastMedianPoint != medianPoint)
-                  //  slope = getSlope(lastMedianPoint, medianPoint);
+                // if (lastMedianPoint != medianPoint)
+                //    slope = getSlope(lastMedianPoint, medianPoint);
                 // filteredSlope = myFilter.getFilteredValue(slope);
-        
-                float speed = sqrt(pow(worldPoint.x - 
-                    lastWorldPoint.x, 2) + pow(worldPoint.y - 
-                    lastWorldPoint.y, 2)) / consumeTime * 1000;
-                cout << "speed: " << speed  << "mm" << endl;
+                float speed = sqrt(pow(medianPoint.x - 
+                    lastMedianPoint.x, 2) + pow(medianPoint.y - 
+                    lastMedianPoint.y, 2)) / consumeTime;
+                float AAA=speed-lastspeed;
+                cout << "speed-lastspeed : " << speed-lastspeed  << "px/s" << endl;
+                // float speed = sqrt(pow(worldPoint.x - 
+                //     lastWorldPoint.x, 2) + pow(worldPoint.y - 
+                //     lastWorldPoint.y, 2)) / consumeTime * 1000;
+                cout << "speed: " << speed  << "px/s" << endl;                
                 (*iter).set_speed(speed);
+                // filtered_speed = myFilterSpeed.getFilteredValue(speed);
+                // cout << "filtered_speed: " << filtered_speed << "px/s" << endl;
                 // plot curve
                 sine_speed.erase(sine_speed.begin());
-                sine_speed.push_back(speed);        
+                sine_speed.push_back(filtered_speed);        
                 // Render Plot Image
                 // Mat image_speed;
                 // plot_speed->render( image_speed );
                 // // Show Image
                 // imshow("curve_speed", image_speed ); 
-                // filtered_speed = myFilterSpeed.getFilteredValue(speed);
-                // cout << "filteredSlope: " << filteredSlope << endl;
-                //cout << "filtered_speed: " << filtered_speed  << "mm" << endl;
-                deleteCar(*iter, carStateSet);
+                
+                DeleteCar(*iter, carStateSet);
 
                 // TODO
                 /*
@@ -301,11 +451,22 @@ int main()
             iter ++;
           
         }   
-        
+        // consume time 
+        // clock_t currentTime = clock();
+        cout << "lastTime: " << lastTime.tv_usec << endl;
+        gettimeofday(&currentTime, NULL);
+        consumeTime = (currentTime.tv_sec - lastTime.tv_sec) + 
+                (float)(currentTime.tv_usec - lastTime.tv_usec) / 1000000.0;
+        cout << "time" << consumeTime << "s" << endl;
+        cout << "fps: " << 1 / consumeTime << "Hz" << endl;
+        float accelatespeed =0;
+         cout << " accelatespeed : " <<  accelatespeed  << "px/s^2" << endl;
         // update the last state
         lastTime = currentTime;
+        cout << "lastTime: " << lastTime.tv_usec << endl;
     }
+    // send stop command to cars
+    StopCars();
     return 0;
 
 }
-    

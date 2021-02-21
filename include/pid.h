@@ -1,5 +1,5 @@
-#ifndef CTRL_TEST_H_
-#define CTRL_TEST_H_
+#ifndef PID_H_
+#define PID_H_
 
 #include <iostream>
 #include <time.h>
@@ -53,8 +53,8 @@ private:
     float speed_i_;
     float speed_d_;
     float rc_;
-    double wp_angel_;
-    double wp_move_;
+    float wp_angel_;
+    float wp_move_;
 };
 
-#endif
+#endif // PID_H

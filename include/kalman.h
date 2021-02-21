@@ -8,11 +8,11 @@
 class Kalman {
   private:
     /* Kalman filter variables */
-    double q = 0.125; //process noise covariance
-    double r = 32; //measurement noise covariance
-    double x = 0; //value
-    double p = 1023; //estimation error covariance
-    double k; //kalman gain
+    float q = 0.125; //process noise covariance
+    float r = 32; //measurement noise covariance
+    float x = 0; //value
+    float p = 1023; //estimation error covariance
+    float k; //kalman gain
     
   public:
     Kalman() {
@@ -21,7 +21,7 @@ class Kalman {
         this->p = 1023;
         this->x = 0; 
     }
-    Kalman(double process_noise, double sensor_noise, double estimated_error, double intial_value) {
+    Kalman(float process_noise, float sensor_noise, float estimated_error, float intial_value) {
       /* The variables are x for the filtered value, q for the process noise, 
          r for the sensor noise, p for the estimated error and k for the Kalman Gain. 
          The state of the filter is defined by the values of these variables.
@@ -46,7 +46,7 @@ class Kalman {
         this->x = intial_value; //x will hold the iterated filtered value
     }
     
-    double getFilteredValue(double measurement) {
+    float getFilteredValue(float measurement) {
       /* Updates and gets the current measurement value */
       //prediction update
       //omit x = x
@@ -60,26 +60,26 @@ class Kalman {
       return this->x;
     }
     
-    void setParameters(double process_noise, double sensor_noise, double estimated_error) {
+    void setParameters(float process_noise, float sensor_noise, float estimated_error) {
         this->q = process_noise;
         this->r = sensor_noise;
         this->p = estimated_error;
     }
 
-    void setParameters(double process_noise, double sensor_noise) {
+    void setParameters(float process_noise, float sensor_noise) {
         this->q = process_noise;
         this->r = sensor_noise;
     }
     
-    double getProcessNoise() {
+    float getProcessNoise() {
       return this->q;
     }
     
-    double getSensorNoise() {
+    float getSensorNoise() {
       return this->r;
     }
     
-    double getEstimatedError() {
+    float getEstimatedError() {
       return this->p;
     }
 };

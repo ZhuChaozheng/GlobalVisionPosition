@@ -7,36 +7,8 @@
  * motion instructions.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <opencv2/plot.hpp>
-#include "timer.h"
-#include "kalman.h"
-#include "car.h"
-#include "udp.h"
-#include "pid.h"
-#include "image_process.h"
-#include "init_camera.h"
-#include "image_transformation.h"
-#include "file_operation.h"
+#include "control_interface.h"
 
-using namespace cv;
-using namespace std;
-
-enum trajectory_type
-{
-    RECTANGLE = 1,
-    CIRCLE = 2,
-    TRIANGLE = 3 
-};
-// classification of car
-vector<Car> car_set;
-Timer traTimer;
-
-bool app_stopped = false;
 void sigint_handler(int sig) {
     if (sig == SIGINT) 
     {
@@ -87,34 +59,6 @@ void UpdateSlope(const float target_slope,
     }
 }
 
-
-/* 
- * 
- * define multiple trajectory modules, loop 0, 90, 180, 270
- * to form a rectangle. 
- *
- *
- */
-// void TimerTrajectory(const int trajectory_type, 
-//         const int marker)
-// {
-//     switch(trajectory_type):
-//         case RECTANGLE:
-//             // TODO
-//             UpdateSlope(0, marker);
-//             Timer timer;
-//             timer.startOnce(4000, UpdateSlope(90, marker));           ;
-//             // Sleep(2)
-//             break;
-//         case CIRCLE:
-//             // TODO
-//             break;
-//         case TRIANGLE:
-//             // TODO
-//             break;
-
-// }
-
 void ConfigParamtersRead()
 {
     FileStorage fs("../config/configure.yaml", 
@@ -132,7 +76,7 @@ void ConfigParamtersRead()
     // clear old car set
     
     // car_set.erase(car_set.begin(), car_set.end());
-    for (int i = 4; i <= 4; i ++) {
+    for (int i = 0; i <= 9; i++) {
         string front_str = "marker_";
         string combined_str = front_str + to_string(i);
         fs[combined_str] >> marker_;
@@ -263,15 +207,191 @@ void TimerTrajectory(const trajectory_type type,
 
 }
 
+// stop car 
+void StopCar(Car &car)
+{
+    
+    /* define comm format*/
+    char a[6] = {0x11,0x00,0x00,0x00,0x00,0x22};
+    // build communication based on udp
+    string ip = car.get_ip();
+    udp udp_comm;
+    int sock_fd = udp_comm.udp_init(ip);
+    // send data through udp
+    udp_comm.send_data(sock_fd, a);
+    int marker = car.get_marker();
+    cout << marker << " stopped!" << endl;
+}
+
+// convert float to char through memory
+void float2char(float source, char *src)
+{   
+    char *temp;
+    char buff[4];
+    memset(buff, 0, sizeof(buff));
+
+    for(int i = 0; i < 20; i = i + 4)
+    {
+        temp = (char*)(&(source));
+        src[i] = temp[0];
+        src[i + 1] = temp[1];
+        src[i + 2] = temp[2];
+        src[i + 3] = temp[3];
+        cout << i << endl;
+    }
+}
+
+void char2float(char *src, float *target)
+{
+    for(int i = 0; i < 200; i = i + 4)
+    {
+        char temp[4];
+        temp[0] = src[i];
+        temp[1] = src[i + 1];
+        temp[2] = src[i + 2];
+        temp[3] = src[i + 3];
+
+        target = (float*)(&temp);
+        cout <<"target " << *target << endl;
+        cout << "i " << i << endl;
+    }
+}
+
+
+void interface_udp(vector<Car> &cars_control_set)
+{
+    if (cars_control_set.size() != 10)
+    {
+        cout << "check your size" << endl;
+        return;
+    }
+    vector<float> float_set;
+    
+    // convert Car vector to float vector
+    for (auto iter = cars_control_set.begin(); 
+            iter != cars_control_set.end();)
+    {           
+        Point2f target_point = (*iter).get_target_point();
+        float target_slope = (*iter).get_target_slope();
+        float target_speed = (*iter).get_target_speed();
+        float stop_flag = (*iter).get_stop_flag();
+        float_set.push_back(target_point.x);
+        float_set.push_back(target_point.y);
+        float_set.push_back(target_slope);
+        float_set.push_back(target_speed);
+        float_set.push_back(stop_flag);
+        iter ++;
+    }
+    // convert float vector to char array, every car is 5*4,
+    // the total of ten cars is equal to 5*4*10=200
+    char src[200];
+    char *temp;
+    int i = 0;
+    for(auto iter = float_set.begin(); iter != float_set.end();)
+    {       
+        temp = (char*)(&(*iter));
+        src[i] = temp[0];
+        src[i + 1] = temp[1];
+        src[i + 2] = temp[2];
+        src[i + 3] = temp[3];
+        i = i + 4;
+        iter ++;
+    }
+    float *w;
+    char2float(src, w);
+
+    // 1 130.22, 139.22, 30.1, 52.2, 0
+    // 2 130.22, 139.22, 30.1, 52.2, 0
+    // udp udp_comm;
+    // int sock_fd = udp_comm.udp_init(127.0.0.1);
+    // // send data through udp
+    // udp_comm.send_data(sock_fd, a);
+}
+/*
+ *
+ * Car:
+ *     target_point, target_speed, target_slope, stop_flag
+ *
+ */
+void hardware_control_interface(vector<Car> &cars_control_set)
+{    
+    /*
+     * according the protocol, the vector's size is 10, each one express
+     * a car, and the first of vector is the car of 0 marker. the last of vector
+     * is the car of 9 marker.
+     *
+     * the next code is to map the relational sequence.
+     */
+    int i = 0;      
+    for (auto iter = cars_control_set.begin(); iter != cars_control_set.end();)
+    {           
+        Point2f target_point = (*iter).get_target_point();
+        float target_slope = (*iter).get_target_slope();
+        float target_speed = (*iter).get_target_speed();
+        cout << "hardware_control_interface: " << target_speed << endl;
+        int stop_flag = (*iter).get_stop_flag();
+        for (auto car = car_set.begin(); car != car_set.end();)
+        {
+            int marker = (*car).get_marker();
+            if (marker == i)
+            {
+                (*car).set_target_point(target_point);
+                (*car).set_target_slope(target_slope);
+                (*car).set_target_speed(target_speed);
+                (*car).set_stop_flag(stop_flag);
+            }
+            car ++;
+        }
+        i ++;
+        iter ++;
+    }
+}
+
+/*
+ * this function to realize navigating the specific point by
+ * adjusting continually target slope and judging the distance.
+ * Once the distance is less than 5px, the navigation will end 
+ * and set the target point is (0, 0) 
+ *
+ * Also, if you want to close the navigation function, you just
+ * set its target point is (0, 0).
+ *
+ */
+void NavigateTargetPoint(Car &car)
+{    
+    // the center of circumcircle 
+    Point2f current_point = car.get_median_point(); 
+    cout << "current_point: " << current_point << endl;
+    Point2f target_point = car.get_target_point();
+    cout << "target_point: " << target_point << endl;
+    // exit navigation 
+    if (target_point.x == 0 & target_point.y == 0)
+        return;
+    // the median point between two points
+    float orientation_slope = GetSlope(current_point, target_point);
+    car.set_target_slope(orientation_slope);
+    float distance = GetPixelDistance(current_point, target_point);
+    if (distance < 5) // about 10mm, 1px = 2mm
+    {
+        cout << "Get Goal!********************************************" << endl;
+        car.set_target_point(Point2f(0, 0));
+        car.set_target_speed(0);
+        StopCar(car);
+        return;
+    }
+}
+
 int main()
 {
     // TimerTrajectory(RECTANGLE, 5);
     // ***** dynamicly tune parameter thread ********
     // intialize timer thread
     Timer timer;
+    float target_slope_=0;
+    float time_=0;
     // // execute task every 2000 microsecond
-    timer.start(2000, std::bind(ConfigParamtersRead));
-    // ConfigParamtersRead();
+    // timer.start(2000, std::bind(ConfigParamtersRead));
+    ConfigParamtersRead();
     // *********** main thread ******************
     // register signal ctrl+c
     signal(SIGINT, sigint_handler);
@@ -323,14 +443,30 @@ int main()
     Mat src;
     Mat src_thresh;
     float sum_time;
-    int i = 0;
-    // TimerTrajectory(RECTANGLE, 0);
-    // TimerTrajectory(RECTANGLE, 3);
-    // TimerTrajectory(RECTANGLE, 5);
+    /*
+     * Car:
+     *     Point2f target_point, 
+     *     float target_speed, 
+     *     float target_slope, 
+     *     int stop_flag
+     */
+    Point2f target_point = Point2f(0, 0);
+    float target_speed = 0;
+    float target_slope = 47;
+    int stop_flag = 0;
+    Car car;
+    car.set_target_point(target_point);
+    car.set_target_speed(target_speed);
+    car.set_target_slope(target_slope);
+    car.set_stop_flag(stop_flag);
+    vector<Car> cars_control_set;
+    for(int i = 0; i <= 9; i ++)
+        cars_control_set.push_back(car);
+    cout << cars_control_set.size() << endl;
+    hardware_control_interface(cars_control_set);
     while (1) 
     {
-
-        cout << i++ << endl;
+        
         if (app_stopped) break;
         StartGrabStream(src);
         if (src.empty())
@@ -347,9 +483,9 @@ int main()
         // imwrite("warp_dst.jpg", src);
         // imwrite("warp_rotate_dst.jpg", warp_rotate_dst);
         // return 0;
-        threshold(src, src_thresh, 110, 255, THRESH_BINARY);
-         namedWindow( "src_thresh", 0 );
-         imshow("src_thresh", src_thresh);
+        threshold(src, src_thresh, 80, 255, THRESH_BINARY);
+         // namedWindow( "src_thresh", 0 );
+         // imshow("src_thresh", src_thresh);
 
         vector<Point2f> pointSet;
         ThreshCallBack(src_thresh, pointSet);
@@ -366,22 +502,15 @@ int main()
             else
                break;
         }
-
-
-
         // output car attribution
         for (auto iter = car_set.begin(); iter != car_set.end();)
-        {
-            float target_slope = (*iter).get_target_slope();
-            cout << "target_slope " << target_slope << endl;
+        {            
             GetCarKeyAttribution(*iter);
             Point2f medianPoint = (*iter).get_median_point();
             int marker = (*iter).get_marker();
             float slope = (*iter).get_slope();
             // Point3f targetPoint = (*iter).get_target();
-            Point2f target_point = (*iter).get_target_point();
-            cout << "target_point: " << target_point << endl;
-
+            
             cout << "marker: " << marker << endl;
             cout << "slope: " << slope << endl;
             float filteredSlope = (*iter).filter_.getFilteredValue(slope);
@@ -396,6 +525,11 @@ int main()
             //imshow("curve_angle", image );
             //waitKey(5);
             float target_speed = (*iter).get_target_speed();
+            cout << "target_speed: " << target_speed << endl;
+            Point2f target_point = (*iter).get_target_point();
+            cout << "target_point: " << target_point << endl; 
+            float target_slope = (*iter).get_target_slope();
+            cout << "target_slope: " << target_slope << endl;
             // plot standard curve
             // sine_manhattan_distance.erase(sine_manhattan_distance.begin());
             // sine_manhattan_distance.push_back(target_speed);        
@@ -409,6 +543,9 @@ int main()
             // Point3f worldPoint;
             // PointToWorld(medianPoint, worldPoint, rvecM1, 
             //              tvec1, cameraMatrix, s);
+            /****************** Navigation Step ***************************/
+            NavigateTargetPoint(*iter);
+            /************************* end Navigation *****************/
             Car lastCar;
 
             if (Exist((*iter), carStateSet, lastCar))
@@ -434,11 +571,11 @@ int main()
                     lastMedianPoint.x, 2) + pow(medianPoint.y - 
                     lastMedianPoint.y, 2)) / consumeTime;
                 difference =speed-lastspeed;
-                cout << "speed-lastspeed : " << difference  << "px/s" << endl;
+                //cout << "speed-lastspeed : " << difference  << "px/s" << endl;
                 // float speed = sqrt(pow(worldPoint.x - 
                 //     lastWorldPoint.x, 2) + pow(worldPoint.y - 
                 //     lastWorldPoint.y, 2)) / consumeTime * 1000;
-                cout << "speed: " << speed  << "px/s" << endl;                
+                //cout << "speed: " << speed  << "px/s" << endl;                
                 (*iter).set_speed(speed);
                 // filtered_speed = myFilterSpeed.getFilteredValue(speed);
                 // cout << "filtered_speed: " << filtered_speed << "px/s" << endl;
@@ -462,7 +599,7 @@ int main()
                  * subtle error.
                  */
                 pid pid_control;
-                pid_control.controlSpeedAndAngular(*iter);
+                 pid_control.controlSpeedAndAngular(*iter);
             }
             carStateSet.push_back((*iter));
             iter ++;
@@ -476,10 +613,13 @@ int main()
                 (float)(currentTime.tv_usec - lastTime.tv_usec) / 1000000.0;
         cout << "time" << consumeTime << "s" << endl;
         cout << "fps: " << 1 / consumeTime << "Hz" << endl;
-        
-        if((accelatespeed<=difference/consumeTime) && difference>0)
-            accelatespeed=fabs(difference)/consumeTime;
-         cout << " accelatespeed : " <<  accelatespeed  << "px/s^2" << endl;
+        time_+=consumeTime;
+        cout << "time_" << time_ << "s" << endl;
+        // if((accelatespeed<=difference/consumeTime) && difference>0 && difference/consumeTime<600)
+        //    {
+        //         accelatespeed=fabs(difference)/consumeTime;
+        //    } 
+        //  cout << " accelatespeed : " <<  accelatespeed  << "px/s^2" << endl;
         // update the last state
         lastTime = currentTime;
         cout << "lastTime: " << lastTime.tv_usec << endl;
